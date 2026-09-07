@@ -10,33 +10,91 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ExplorarRouteImport } from './routes/explorar'
+import { Route as IngressosRouteImport } from './routes/ingressos'
+import { Route as PerfilRouteImport } from './routes/perfil'
+import { Route as ScannerRouteImport } from './routes/scanner'
+import { Route as EventoIdRouteImport } from './routes/evento.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExplorarRoute = ExplorarRouteImport.update({
+  id: '/explorar',
+  path: '/explorar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IngressosRoute = IngressosRouteImport.update({
+  id: '/ingressos',
+  path: '/ingressos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PerfilRoute = PerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScannerRoute = ScannerRouteImport.update({
+  id: '/scanner',
+  path: '/scanner',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventoIdRoute = EventoIdRouteImport.update({
+  id: '/evento/$id',
+  path: '/evento/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/explorar': typeof ExplorarRoute
+  '/ingressos': typeof IngressosRoute
+  '/perfil': typeof PerfilRoute
+  '/scanner': typeof ScannerRoute
+  '/evento/$id': typeof EventoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/explorar': typeof ExplorarRoute
+  '/ingressos': typeof IngressosRoute
+  '/perfil': typeof PerfilRoute
+  '/scanner': typeof ScannerRoute
+  '/evento/$id': typeof EventoIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/explorar': typeof ExplorarRoute
+  '/ingressos': typeof IngressosRoute
+  '/perfil': typeof PerfilRoute
+  '/scanner': typeof ScannerRoute
+  '/evento/$id': typeof EventoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    '/' | '/explorar' | '/ingressos' | '/perfil' | '/scanner' | '/evento/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/explorar' | '/ingressos' | '/perfil' | '/scanner' | '/evento/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/explorar'
+    | '/ingressos'
+    | '/perfil'
+    | '/scanner'
+    | '/evento/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ExplorarRoute: typeof ExplorarRoute
+  IngressosRoute: typeof IngressosRoute
+  PerfilRoute: typeof PerfilRoute
+  ScannerRoute: typeof ScannerRoute
+  EventoIdRoute: typeof EventoIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +106,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/explorar': {
+      id: '/explorar'
+      path: '/explorar'
+      fullPath: '/explorar'
+      preLoaderRoute: typeof ExplorarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ingressos': {
+      id: '/ingressos'
+      path: '/ingressos'
+      fullPath: '/ingressos'
+      preLoaderRoute: typeof IngressosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/perfil': {
+      id: '/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof PerfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/scanner': {
+      id: '/scanner'
+      path: '/scanner'
+      fullPath: '/scanner'
+      preLoaderRoute: typeof ScannerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/evento/$id': {
+      id: '/evento/$id'
+      path: '/evento/$id'
+      fullPath: '/evento/$id'
+      preLoaderRoute: typeof EventoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ExplorarRoute: ExplorarRoute,
+  IngressosRoute: IngressosRoute,
+  PerfilRoute: PerfilRoute,
+  ScannerRoute: ScannerRoute,
+  EventoIdRoute: EventoIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
