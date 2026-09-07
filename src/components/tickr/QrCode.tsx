@@ -34,11 +34,11 @@ export function QrCode({ value, className = "" }: { value: string; className?: s
         if (finder(r, c, size)) return null;
         return on ? <rect key={i} x={c} y={r} width={1} height={1} fill="#0b0b0b" /> : null;
       })}
-      {[
+      {([
         [0, 0],
         [0, size - 7],
         [size - 7, 0],
-      ].map(([r, c]: number[]) => (
+      ] as Array<[number, number]>).map(([r, c]) => (
         <g key={`${r}-${c}`} fill="#0b0b0b">
           <rect x={c} y={r} width={7} height={7} />
           <rect x={c + 1} y={r + 1} width={5} height={5} fill="#fff" />
