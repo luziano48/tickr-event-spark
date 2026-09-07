@@ -38,7 +38,7 @@ export function QrCode({ value, className = "" }: { value: string; className?: s
         [0, 0],
         [0, size - 7],
         [size - 7, 0],
-      ].map(([r, c]) => (
+      ].map(([r, c]: number[]) => (
         <g key={`${r}-${c}`} fill="#0b0b0b">
           <rect x={c} y={r} width={7} height={7} />
           <rect x={c + 1} y={r + 1} width={5} height={5} fill="#fff" />
