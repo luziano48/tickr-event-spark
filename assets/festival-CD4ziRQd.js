@@ -1,0 +1,1 @@
+var e=`/assets/festival-D8xDTMCm.jpg`;export{e as t};
