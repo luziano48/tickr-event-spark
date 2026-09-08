@@ -40,33 +40,46 @@
 
 :root {
   --radius: 1rem;
-  --background: oklch(0.16 0.032 250);
-  --foreground: oklch(0.98 0.005 180);
-  --card: oklch(0.21 0.03 250);
-  --card-foreground: oklch(0.98 0.005 180);
-  --popover: oklch(0.21 0.03 250);
-  --popover-foreground: oklch(0.98 0.005 180);
-  --primary: oklch(0.82 0.19 158);
-  --primary-foreground: oklch(0.18 0.04 170);
-  --secondary: oklch(0.26 0.03 250);
-  --secondary-foreground: oklch(0.98 0.005 180);
-  --muted: oklch(0.26 0.03 250);
-  --muted-foreground: oklch(0.7 0.02 240);
-  --accent: oklch(0.3 0.04 200);
-  --accent-foreground: oklch(0.98 0.005 180);
-  --destructive: oklch(0.63 0.21 25);
-  --destructive-foreground: oklch(0.98 0.005 180);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.82 0.19 158);
-  --surface: oklch(0.19 0.03 250);
-  --surface-2: oklch(0.24 0.032 250);
-  --mint: oklch(0.86 0.17 165);
-  --teal: oklch(0.78 0.12 200);
+  
+  /* Superfícies de Fundo (De ultra escuro para claros/brancos) */
+  --background: oklch(0.99 0.005 180);         /* Fundo principal quase branco */
+  --surface: oklch(0.97 0.008 180);            /* Elevação 1 levemente acinzentada/azulada */
+  --surface-2: oklch(0.94 0.012 180);          /* Elevação 2 */
+  --card: oklch(1 0 0);                        /* Branco puro para destaques de cards */
+  --popover: oklch(1 0 0);                     /* Branco puro para popovers */
+  
+  /* Textos / Foreground (De muito claros para tons escuros de alto contraste) */
+  --foreground: oklch(0.20 0.032 250);         /* Texto principal escuro */
+  --card-foreground: oklch(0.20 0.032 250);
+  --popover-foreground: oklch(0.20 0.032 250);
+  --secondary-foreground: oklch(0.20 0.032 250);
+  --accent-foreground: oklch(0.20 0.032 250);
+  
+  /* Destaques (Ajustados na luminância para ter leitura excelente em fundo claro) */
+  --primary: oklch(0.55 0.18 158);              /* Menta/Verde mais escuro para contraste no branco */
+  --primary-foreground: oklch(0.99 0.005 180);  /* Texto claro sobre botão primary */
+  
+  /* Componentes Secundários e Suaves */
+  --secondary: oklch(0.93 0.015 200);          /* Fundo suave para botões secundários */
+  --muted: oklch(0.93 0.015 200);              /* Fundo neutro suave */
+  --muted-foreground: oklch(0.48 0.03 240);    /* Texto secundário/sutil */
+  --accent: oklch(0.91 0.025 200);             /* Destaque suave ao passar o mouse */
+  
+  /* Ações Destrutivas (Ajustado para ler bem em fundo claro) */
+  --destructive: oklch(0.58 0.22 25);
+  --destructive-foreground: oklch(0.99 0.005 180);
+  
+  /* Bordas e Inputs (Tons sutis em fundo claro) */
+  --border: oklch(0 0 0 / 12%);
+  --input: oklch(0 0 0 / 16%);
+  --ring: oklch(0.55 0.18 158);                /* Acompanha o novo --primary */
+  
+  /* Destaques e Degradês */
+  --mint: oklch(0.65 0.17 165);                /* Contraste ajustado mantendo a vivacidade */
+  --teal: oklch(0.58 0.14 200);
   --gradient-primary: linear-gradient(135deg, var(--mint), var(--primary));
-  --shadow-glow: 0 12px 40px -12px color-mix(in oklab, var(--primary) 55%, transparent);
+  --shadow-glow: 0 12px 40px -12px color-mix(in oklab, var(--primary) 25%, transparent);
 }
-
 @layer base {
   * {
     border-color: var(--color-border);
