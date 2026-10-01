@@ -202,7 +202,6 @@ function Eventos() {
   const [eventMenuOpen, setEventMenuOpen] = useState(false);
   const [filter, setFilter] = useState("vendidos");
   const [openTicketMenu, setOpenTicketMenu] = useState(null);
-  const [ticketState, setTicketState] = useState(null);
   const [salesState, setSalesState] = useState({});
   const [confirmClose, setConfirmClose] = useState(false);
   const [showAllTransactions, setShowAllTransactions] = useState(false);
