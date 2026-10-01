@@ -59,13 +59,13 @@ const statusStyles = {
 
 const eventStatusStyles = {
   Ativo: "bg-primary/15 text-primary",
-  Pausado: "bg-amber-500/15 text-amber-600",
+  Pausado: "bg-surface-2 text-muted-foreground",
   Encerrado: "bg-surface-2 text-muted-foreground",
 };
 
 const eventStatusDot = {
   Ativo: "bg-primary",
-  Pausado: "bg-amber-500",
+  Pausado: "bg-muted-foreground",
   Encerrado: "bg-muted-foreground",
 };
 
@@ -209,17 +209,12 @@ function Eventos() {
 
   const event = getEventDashboard(eventId);
   const closed = Boolean(salesState[event.id]);
-  const tickets = ticketState
-    ? ticketState.filter((t) => t.eventId === event.id)
-    : event.tickets;
+  const [ticketsByEvent, setTicketsByEvent] = useState({});
+  const tickets = ticketsByEvent[event.id] ?? event.tickets;
   const currentStatus = closed ? "Encerrado" : event.status;
 
-  const sold = tickets.filter((t) => t.status !== "Cancelado").length;
   const capacity = event.capacity;
-  const percent = Math.min(
-    100,
-    Math.round(((closed ? event.sold : event.sold) / capacity) * 100),
-  );
+  const percent = Math.min(100, Math.round((event.sold / capacity) * 100));
 
   const visibleTickets = tickets.filter((ticket) => {
     if (filter === "escaneados") return ticket.status === "Usado";
@@ -241,11 +236,12 @@ function Eventos() {
     }).length;
 
   const updateTicket = (id, status) => {
-    setTicketState(
-      (tickets.map((t) => (t.eventId ? t : { ...t, eventId: event.id })) || []).map(
-        (t) => (t.id === id ? { ...t, status } : t),
+    setTicketsByEvent((state) => ({
+      ...state,
+      [event.id]: tickets.map((ticket) =>
+        ticket.id === id ? { ...ticket, status } : ticket,
       ),
-    );
+    }));
     setOpenTicketMenu(null);
   };
 
