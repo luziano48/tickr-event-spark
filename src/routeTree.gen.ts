@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CriarRouteImport } from './routes/criar'
+import { Route as EventosRouteImport } from './routes/eventos'
 import { Route as ExplorarRouteImport } from './routes/explorar'
 import { Route as IngressosRouteImport } from './routes/ingressos'
 import { Route as MensagensRouteImport } from './routes/mensagens'
@@ -26,6 +27,11 @@ const IndexRoute = IndexRouteImport.update({
 const CriarRoute = CriarRouteImport.update({
   id: '/criar',
   path: '/criar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventosRoute = EventosRouteImport.update({
+  id: '/eventos',
+  path: '/eventos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExplorarRoute = ExplorarRouteImport.update({
@@ -62,6 +68,7 @@ const EventoIdRoute = EventoIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/criar': typeof CriarRoute
+  '/eventos': typeof EventosRoute
   '/explorar': typeof ExplorarRoute
   '/ingressos': typeof IngressosRoute
   '/mensagens': typeof MensagensRoute
@@ -72,6 +79,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/criar': typeof CriarRoute
+  '/eventos': typeof EventosRoute
   '/explorar': typeof ExplorarRoute
   '/ingressos': typeof IngressosRoute
   '/mensagens': typeof MensagensRoute
@@ -83,6 +91,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/criar': typeof CriarRoute
+  '/eventos': typeof EventosRoute
   '/explorar': typeof ExplorarRoute
   '/ingressos': typeof IngressosRoute
   '/mensagens': typeof MensagensRoute
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/criar'
+    | '/eventos'
     | '/explorar'
     | '/ingressos'
     | '/mensagens'
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/criar'
+    | '/eventos'
     | '/explorar'
     | '/ingressos'
     | '/mensagens'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/criar'
+    | '/eventos'
     | '/explorar'
     | '/ingressos'
     | '/mensagens'
@@ -126,6 +138,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CriarRoute: typeof CriarRoute
+  EventosRoute: typeof EventosRoute
   ExplorarRoute: typeof ExplorarRoute
   IngressosRoute: typeof IngressosRoute
   MensagensRoute: typeof MensagensRoute
@@ -148,6 +161,13 @@ declare module '@tanstack/react-router' {
       path: '/criar'
       fullPath: '/criar'
       preLoaderRoute: typeof CriarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/eventos': {
+      id: '/eventos'
+      path: '/eventos'
+      fullPath: '/eventos'
+      preLoaderRoute: typeof EventosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/explorar': {
@@ -198,6 +218,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CriarRoute: CriarRoute,
+  EventosRoute: EventosRoute,
   ExplorarRoute: ExplorarRoute,
   IngressosRoute: IngressosRoute,
   MensagensRoute: MensagensRoute,
