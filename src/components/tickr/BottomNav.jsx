@@ -10,7 +10,7 @@ const items = [
 export function BottomNav() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md border-t border-border bg-surface/95 backdrop-blur">
+    <nav className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md border-t border-border bg-card/95 shadow-[0_-12px_36px_-24px_var(--primary)] backdrop-blur-xl">
       {/* NAVEGACAO INFERIOR: JSX neste arquivo; visual definido pelas classes Tailwind. */}
       <ul className="flex items-center justify-around px-2 pt-2 pb-[max(0.6rem,env(safe-area-inset-bottom))]">
         {items.map(({ to, label, icon: Icon }) => {
@@ -22,15 +22,17 @@ export function BottomNav() {
                 to={to}
                 className={
                   isCreate
-                    ? "flex w-20 flex-col items-center gap-1 text-[10px] text-primary"
-                    : `flex w-20 flex-col items-center gap-1 text-[10px] ${active ? "text-primary" : "text-muted-foreground"}`
+                      ? "flex w-20 flex-col items-center gap-1 text-[10px] font-bold text-primary"
+                      : `flex w-20 flex-col items-center gap-1 text-[10px] ${active ? "font-bold text-primary" : "text-muted-foreground"}`
                 }
               >
                 <span
                   className={
                     isCreate
                       ? "grid size-12 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg ring-4 ring-surface"
-                      : ""
+                      : active
+                        ? "grid size-8 place-items-center rounded-full bg-success-soft"
+                        : "grid size-8 place-items-center"
                   }
                 >
                   <Icon
