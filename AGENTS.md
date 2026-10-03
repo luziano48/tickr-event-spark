@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Keep the shared Tickr visual language in semantic CSS tokens and the Screen/BottomNav shell so color changes stay consistent across routes.
