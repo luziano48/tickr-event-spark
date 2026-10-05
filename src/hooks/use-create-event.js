@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { saveCreatedEvent } from "@/data/created-events";
 
 export const eventFormCategories = ["MÚSICA", "CULTURA", "FESTIVAL", "NEGÓCIOS", "DESPORTO"];
 
@@ -76,6 +77,8 @@ export function useCreateEvent() {
   const [stepIndex, setStepIndex] = useState(0);
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState("idle");
+  const [createdEvent, setCreatedEvent] = useState(null);
+  const [imageData, setImageData] = useState("");
 
   const step = createSteps[stepIndex];
 
@@ -91,6 +94,9 @@ export function useCreateEvent() {
       imageUrl: URL.createObjectURL(file),
       imageName: file.name,
     }));
+    const reader = new FileReader();
+    reader.onload = () => setImageData(String(reader.result));
+    reader.readAsDataURL(file);
   };
 
   const addTicket = () =>
@@ -140,6 +146,7 @@ export function useCreateEvent() {
     }
     setStatus("sending");
     await new Promise((resolve) => setTimeout(resolve, 1200));
+    setCreatedEvent(saveCreatedEvent(form, imageData));
     setStatus("done");
   };
 
@@ -148,6 +155,8 @@ export function useCreateEvent() {
     setErrors({});
     setStepIndex(0);
     setStatus("idle");
+    setCreatedEvent(null);
+    setImageData("");
   };
 
   const totalCapacity = useMemo(
@@ -173,5 +182,6 @@ export function useCreateEvent() {
     submit,
     reset,
     totalCapacity,
+    createdEvent,
   };
 }
