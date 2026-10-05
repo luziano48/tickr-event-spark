@@ -3,6 +3,8 @@ import { ArrowLeft, ArrowRight, BadgeCheck, Check, Headset, Mail, MessageCircle 
 import { Screen } from "@/components/tickr/Screen";
 import { eventSteps, supportContacts, tickrPosts } from "@/data/tickr-profile";
 import { getEvent } from "@/data/events";
+import { loadCreatedEvents } from "@/data/created-events";
+import { useEffect, useState } from "react";
 import festivalImage from "@/assets/tick perfil.PNG";
 
 export const Route = createFileRoute("/evento/$id")({
@@ -27,8 +29,23 @@ export const Route = createFileRoute("/evento/$id")({
 function EventoPage() {
   const { id } = Route.useParams();
   const event = getEvent(id);
+  const [created, setCreated] = useState(undefined);
+  useEffect(() => {
+    setCreated(loadCreatedEvents().find((item) => item.id === id) || null);
+  }, [id]);
   if (event && id !== "festival-luanda") return <EventDetail event={event} />;
-  return <TickrProfile />;
+  if (id === "festival-luanda") return <TickrProfile />;
+  if (created === undefined) return <Screen nav={false}><div className="min-h-screen" /></Screen>;
+  if (created) return <EventDetail event={created} />;
+  return (
+    <Screen nav={false}>
+      <main className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
+        <h1 className="text-xl font-extrabold">Evento não encontrado</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Este evento já não está disponível.</p>
+        <Link to="/explorar" className="mt-4 text-sm font-bold text-primary">Ver outros eventos</Link>
+      </main>
+    </Screen>
+  );
 }
 
 function EventDetail({ event }) {
@@ -47,6 +64,28 @@ function EventDetail({ event }) {
           {event.date} · {event.time} · {event.venue}, {event.city}
         </p>
         <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{event.description}</p>
+        {event.tickets?.length ? (
+          <div className="mt-5 space-y-2">
+            <h2 className="text-sm font-bold">Ingressos</h2>
+            {event.tickets.map((t) => (
+              <div key={t.name} className="flex items-center justify-between rounded-2xl bg-card p-3 text-sm">
+                <span className="font-semibold">{t.name}</span>
+                <span className="text-xs text-muted-foreground">{t.quantity} lugares</span>
+                <span className="font-bold text-primary">{Number(t.price) ? `Kz ${Number(t.price).toLocaleString("pt-PT")}` : "Grátis"}</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
+        {event.createdByUser ? (
+          <div className="mt-5 space-y-2 rounded-2xl bg-surface-2 p-4 text-xs text-muted-foreground">
+            <p><span className="font-bold text-foreground">Idade:</span> {event.age}</p>
+            {event.rules ? <p><span className="font-bold text-foreground">Regras:</span> {event.rules}</p> : null}
+            <p><span className="font-bold text-foreground">Contacto:</span> {event.contactName}</p>
+            <a href={`https://wa.me/${event.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-bold text-primary">
+              <MessageCircle className="size-3.5" /> Falar no WhatsApp
+            </a>
+          </div>
+        ) : null}
         <div className="mt-6 flex items-center justify-between rounded-2xl bg-card p-4">
           <span className="text-xs text-muted-foreground">A partir de</span>
           <span className="text-lg font-extrabold text-primary">{event.price}</span>
