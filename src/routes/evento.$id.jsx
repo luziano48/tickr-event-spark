@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, BadgeCheck, Check, Headset, Mail, MessageCircle } from "lucide-react";
 import { Screen } from "@/components/tickr/Screen";
 import { eventSteps, supportContacts, tickrPosts } from "@/data/tickr-profile";
+import { getEvent } from "@/data/events";
 import festivalImage from "@/assets/tick perfil.PNG";
 
 export const Route = createFileRoute("/evento/$id")({
@@ -20,8 +21,43 @@ export const Route = createFileRoute("/evento/$id")({
       },
     ],
   }),
-  component: TickrProfile,
+  component: EventoPage,
 });
+
+function EventoPage() {
+  const { id } = Route.useParams();
+  const event = getEvent(id);
+  if (event && id !== "festival-luanda") return <EventDetail event={event} />;
+  return <TickrProfile />;
+}
+
+function EventDetail({ event }) {
+  return (
+    <Screen nav={false}>
+      <header className="flex items-center justify-between px-4 pt-5 pb-4">
+        <Link to="/explorar" aria-label="Voltar" className="grid size-9 place-items-center rounded-full bg-surface-2">
+          <ArrowLeft className="size-4" />
+        </Link>
+        <span className="text-xs font-semibold text-primary">{event.category}</span>
+      </header>
+      <main className="px-4 pb-10">
+        <img src={event.image} alt={event.title} className="h-56 w-full rounded-3xl object-cover" />
+        <h1 className="mt-5 text-2xl font-extrabold">{event.title}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {event.date} · {event.time} · {event.venue}, {event.city}
+        </p>
+        <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{event.description}</p>
+        <div className="mt-6 flex items-center justify-between rounded-2xl bg-card p-4">
+          <span className="text-xs text-muted-foreground">A partir de</span>
+          <span className="text-lg font-extrabold text-primary">{event.price}</span>
+        </div>
+        <Link to="/ingressos" className="grad-primary glow mt-4 flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-bold text-primary-foreground">
+          Comprar ingresso <ArrowRight className="size-4" />
+        </Link>
+      </main>
+    </Screen>
+  );
+}
 
 function TickrProfile() {
   return (
@@ -115,12 +151,15 @@ function TickrProfile() {
                 </span>
                 <h3 className="mt-2 text-base font-bold">{post.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{post.text}</p>
-                <a
-                  href={post.href}
-                  className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-primary"
-                >
-                  {post.action} <ArrowRight className="size-3" />
-                </a>
+                {post.href.startsWith("/") ? (
+                  <Link to={post.href} className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-primary">
+                    {post.action} <ArrowRight className="size-3" />
+                  </Link>
+                ) : (
+                  <a href={post.href} className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-primary">
+                    {post.action} <ArrowRight className="size-3" />
+                  </a>
+                )}
               </article>
             ))}
           </div>
@@ -146,7 +185,7 @@ function TickrProfile() {
             ))}
           </div>
           <Link
-            to="/perfil"
+            to="/criar"
             className="mt-4 flex w-full items-center justify-center rounded-full border border-primary/40 py-3 text-sm font-semibold text-primary"
           >
             Criar meu evento

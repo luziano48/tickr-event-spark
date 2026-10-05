@@ -35,7 +35,9 @@ function Scanner() {
         <div className="relative flex min-h-screen flex-col px-4 pt-5 pb-8 text-white">
           <header className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Settings className="size-5" />
+              <Link to="/eventos" aria-label="Gestão do evento">
+                <Settings className="size-5" />
+              </Link>
               <Link to="/perfil" aria-label="Fechar">
                 <X className="size-5" />
               </Link>
