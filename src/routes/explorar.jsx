@@ -36,7 +36,7 @@ function Explorar() {
               className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             />
           </div>
-          <button className="grid size-12 place-items-center rounded-full bg-surface-2">
+          <button type="button" aria-label="Limpar filtros" onClick={() => { setQuery(""); setCategory("Todos"); }} className="grid size-12 place-items-center rounded-full bg-surface-2">
             <SlidersHorizontal className="size-4" />
           </button>
         </div>

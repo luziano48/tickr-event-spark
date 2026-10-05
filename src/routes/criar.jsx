@@ -530,6 +530,7 @@ function CriarEvento() {
             <button
               type="button"
               aria-label="Pesquisar fornecedores"
+              onClick={() => document.getElementById("suppliers-title")?.scrollIntoView({ behavior: "smooth" })}
               className="grid size-9 place-items-center rounded-full bg-surface-2"
             >
               <Search className="size-4" />
