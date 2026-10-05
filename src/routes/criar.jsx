@@ -71,6 +71,7 @@ function CriarEvento() {
     submit,
     reset,
     totalCapacity,
+    createdEvent,
   } = useCreateEvent();
 
   const sending = status === "sending";
@@ -87,10 +88,20 @@ function CriarEvento() {
             “{form.title}” foi registado com {form.tickets.length} tipo(s) de ingresso e{" "}
             {totalCapacity} lugares. Vamos rever e avisamos pelo WhatsApp {form.whatsapp}.
           </p>
+          {createdEvent ? (
+            <Link
+              to="/evento/$id"
+              params={{ id: createdEvent.id }}
+              className="grad-primary glow mt-6 flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-bold text-primary-foreground"
+            >
+              Ver página do evento <ArrowRight className="size-4" />
+            </Link>
+          ) : null}
           <button
             type="button"
             onClick={reset}
-            className="grad-primary glow mt-6 w-full rounded-full py-3 text-sm font-bold text-primary-foreground"
+            className="mt-3 w-full rounded-full border border-primary/40 py-3 text-sm font-semibold text-primary"
+           
           >
             Criar outro evento
           </button>
