@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 
 - Keep the shared Tickr visual language in semantic CSS tokens and the Screen/BottomNav shell so color changes stay consistent across routes.
+- Keep scroll-direction visibility and floating navigation inside BottomNav, with passive frame-throttled listeners, so page content and layouts remain unchanged.
