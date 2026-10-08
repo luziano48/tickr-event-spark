@@ -12,7 +12,17 @@ import {
   Settings,
   Star,
   X,
+  BadgeCheck,
+  UserPlus,
+  UserCheck,
+  Users,
+  Sparkles,
+  Instagram,
+  Globe,
+  Phone,
+  Calendar,
 } from "lucide-react";
+import { useSocial, suggestedPeople } from "@/hooks/use-social";
 import { Screen } from "@/components/tickr/Screen";
 import {
   draftEvents,
@@ -122,6 +132,9 @@ function Perfil() {
     cancelEditing,
     toggleSetting,
   } = useOrganizerProfile();
+  const social = useSocial();
+  const [hoverStar, setHoverStar] = useState(0);
+  const next = publishedEvents[0]?.event;
 
   const tabCounts = {
     eventos: organizerEvents.length,
@@ -159,59 +172,117 @@ function Perfil() {
       </header>
 
       <main className="px-4">
-        {/* CARTÃO DO PERFIL: foto editável, nome, username, localização e avaliação. */}
-        <section aria-labelledby="profile-title" className="rounded-3xl bg-card p-4 text-center">
-          <div className="relative mx-auto w-fit">
-            <button
-              type="button"
-              onClick={() => photoInput.current?.click()}
-              aria-label="Alterar foto de perfil"
-              className="group relative block size-24 overflow-hidden rounded-full ring-4 ring-primary/20"
-            >
-              <img
-                src={profile.photo}
-                alt={`Foto de perfil de ${profile.name}`}
-                className="size-full object-cover"
-              />
-              <span className="absolute inset-0 grid place-items-center bg-black/35 opacity-0 transition-opacity group-hover:opacity-100">
-                <Camera className="size-5 text-white" />
+        {/* CARTÃO DO PERFIL: foto, verificado, bio, estatísticas sociais. */}
+        <section aria-labelledby="profile-title" className="rounded-3xl bg-card p-4">
+          <div className="flex items-start gap-4">
+            <div className="relative shrink-0">
+              <button type="button" onClick={() => photoInput.current?.click()} aria-label="Alterar foto de perfil"
+                className="group relative block size-24 overflow-hidden rounded-full ring-4 ring-primary/25">
+                <img src={profile.photo} alt={`Foto de perfil de ${profile.name}`} className="size-full object-cover" />
+                <span className="absolute inset-0 grid place-items-center bg-foreground/35 opacity-0 transition-opacity group-hover:opacity-100">
+                  <Camera className="size-5 text-background" />
+                </span>
+              </button>
+              <span className="absolute right-0 bottom-0 grid size-7 place-items-center rounded-full grad-primary text-primary-foreground ring-2 ring-card">
+                <Camera className="size-3.5" />
               </span>
-            </button>
-            <span className="absolute right-0 bottom-0 grid size-7 place-items-center rounded-full grad-primary text-primary-foreground ring-2 ring-card">
-              <Camera className="size-3.5" />
-            </span>
-            <input
-              ref={photoInput}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => changePhoto(e.target.files?.[0])}
-            />
+              <input ref={photoInput} type="file" accept="image/*" className="hidden" onChange={(e) => changePhoto(e.target.files?.[0])} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h1 id="profile-title" className="flex items-center gap-1 text-lg font-extrabold">
+                <span className="truncate">{profile.name}</span>
+                <BadgeCheck className="size-5 shrink-0 fill-primary text-primary-foreground" />
+              </h1>
+              <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">
+                <BadgeCheck className="size-3" /> PERFIL VERIFICADO
+              </span>
+              <p className="mt-1 text-xs font-semibold text-primary">{profile.username}</p>
+              <p className="flex items-center gap-1 text-[11px] text-muted-foreground"><MapPin className="size-3" /> {profile.location}</p>
+            </div>
           </div>
-
-          <h1 id="profile-title" className="mt-3 text-lg font-extrabold">
-            {profile.name}
-          </h1>
-          <p className="text-xs font-semibold text-primary">{profile.username}</p>
-          <p className="mt-1 flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
-            <MapPin className="size-3" /> {profile.location}
+          <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+            Criando experiências inesquecíveis de música, cultura e festivais urbanos em Angola.
           </p>
-          <div className="mt-2 flex items-center justify-center gap-2">
-            <Stars value={organizerProfile.rating} />
-            <span className="text-[11px] font-bold">{organizerProfile.rating.toFixed(1)}</span>
-            <span className="text-[11px] text-muted-foreground">
-              ({organizerProfile.reviewCount} avaliações)
-            </span>
+
+          <div className="mt-4 grid grid-cols-3 divide-x divide-border text-center">
+            <div><p className="text-lg font-extrabold">{organizerEvents.length}</p><p className="text-[10px] text-muted-foreground">Eventos</p></div>
+            <div><p className="text-lg font-extrabold tabular-nums">{(social.connections / 1000).toFixed(2)}k</p><p className="text-[10px] text-muted-foreground">Conexões</p></div>
+            <div>
+              <p className="flex items-center justify-center gap-1 text-lg font-extrabold">{social.rating.toFixed(2)} <Star className="size-4 fill-primary text-primary" /></p>
+              <p className="text-[10px] text-muted-foreground">{social.ratingCount} estrelas</p>
+            </div>
           </div>
 
-          <button
-            type="button"
-            onClick={startEditing}
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-border py-2.5 text-xs font-bold"
-          >
-            <Pencil className="size-3.5" /> Editar perfil
-          </button>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <button type="button" onClick={social.toggleConnect} aria-pressed={social.connected}
+              className={`flex items-center justify-center gap-2 rounded-full py-2.5 text-xs font-bold transition-all active:scale-95 ${
+                social.connected ? "border border-primary bg-primary/10 text-primary" : "grad-primary glow text-primary-foreground"}`}>
+              {social.connected ? <UserCheck className="size-4" /> : <UserPlus className="size-4" />}
+              {social.connected ? "Conectado" : "Conectar"}
+            </button>
+            <button type="button" onClick={startEditing}
+              className="flex items-center justify-center gap-2 rounded-full border border-primary py-2.5 text-xs font-bold text-primary">
+              <Pencil className="size-3.5" /> Editar perfil
+            </button>
+          </div>
+
+          {/* DAR ESTRELAS */}
+          <div className="mt-4 rounded-2xl bg-primary/10 p-3 text-center">
+            <p className="flex items-center justify-center gap-1 text-[11px] font-bold">
+              <Sparkles className="size-3.5 text-primary" /> {social.myStars ? "A sua avaliação" : "Dê estrelas a este organizador"}
+            </p>
+            <div className="mt-2 flex justify-center gap-1" onMouseLeave={() => setHoverStar(0)}>
+              {[1, 2, 3, 4, 5].map((n) => {
+                const lit = n <= (hoverStar || social.myStars);
+                return (
+                  <button key={n} type="button" aria-label={`Dar ${n} estrela${n > 1 ? "s" : ""}`}
+                    onMouseEnter={() => setHoverStar(n)} onClick={() => social.rate(n)}
+                    className={`transition-transform active:scale-75 ${lit ? "scale-110" : ""}`}>
+                    <Star className={`size-7 ${lit ? "fill-primary text-primary" : "text-border"}`} />
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-1 text-[10px] text-muted-foreground">
+              {social.myStars ? ["", "Pode melhorar", "Razoável", "Bom", "Muito bom", "Incrível!"][social.myStars] + " · toque de novo para remover" : "Toque numa estrela"}
+            </p>
+          </div>
         </section>
+
+        {/* PESSOAS PARA CONECTAR */}
+        <section className="mt-4">
+          <h2 className="mb-2 flex items-center gap-1 text-sm font-bold"><Users className="size-4 text-primary" /> Pessoas que pode conhecer</h2>
+          <ul className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
+            {suggestedPeople.map((p) => {
+              const on = social.people[p.id];
+              return (
+                <li key={p.id} className="w-32 shrink-0 rounded-2xl bg-card p-3 text-center">
+                  <span className="mx-auto grid size-12 place-items-center rounded-full grad-primary text-sm font-bold text-primary-foreground">{p.initials}</span>
+                  <p className="mt-2 truncate text-xs font-bold">{p.name}</p>
+                  <p className="text-[10px] text-muted-foreground">{p.role} · {p.mutual + (on ? 1 : 0)} em comum</p>
+                  <button type="button" onClick={() => social.togglePerson(p.id)}
+                    className={`mt-2 w-full rounded-full py-1.5 text-[10px] font-bold transition-all active:scale-95 ${on ? "bg-primary/15 text-primary" : "bg-primary text-primary-foreground"}`}>
+                    {on ? "Conectado ✓" : "Conectar"}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+
+        {next ? (
+          <Link to="/evento/$id" params={{ id: next.id }} className="relative mt-4 block overflow-hidden rounded-3xl">
+            <img src={next.image} alt={next.title} className="h-48 w-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-r from-foreground/85 via-foreground/50 to-transparent p-4 text-background">
+              <span className="rounded-full bg-primary px-2 py-1 text-[10px] font-bold text-primary-foreground">PRÓXIMO EVENTO</span>
+              <p className="mt-3 max-w-[70%] text-lg font-extrabold">{next.title}</p>
+              <p className="mt-1 flex items-center gap-1 text-[11px]"><Calendar className="size-3" /> {next.date} · {next.time}</p>
+              <span className="mt-3 inline-flex items-center gap-1 rounded-full bg-primary/90 px-3 py-1.5 text-xs font-bold text-primary-foreground">
+                Comprar bilhete <ArrowRight className="size-3" />
+              </span>
+            </div>
+          </Link>
+        ) : null}
 
         {/* EDITAR PERFIL: painel inline com campos funcionais. */}
         {editing ? (
@@ -316,19 +387,6 @@ function Perfil() {
           </section>
         ) : null}
 
-        {/* ESTATÍSTICAS */}
-        <div className="mt-4 grid grid-cols-3 gap-2">
-          {profileStats.map(({ icon: Icon, value, label }) => (
-            <div key={label} className="rounded-2xl bg-card p-3">
-              <span className="grid size-8 place-items-center rounded-lg bg-primary/15">
-                <Icon className="size-4 text-primary" />
-              </span>
-              <p className="mt-3 text-lg font-extrabold">{value}</p>
-              <p className="text-[10px] leading-tight text-muted-foreground">{label}</p>
-            </div>
-          ))}
-        </div>
-
         {/* ABAS: Meus eventos, Publicados, Rascunhos e Avaliações. */}
         <nav
           aria-label="Secções do perfil"
@@ -399,6 +457,22 @@ function Perfil() {
               ))}
             </ul>
           )}
+        </section>
+
+        <section className="mt-5 rounded-3xl bg-primary/10 p-4">
+          <h2 className="text-sm font-bold">Contactos e parceiros</h2>
+          <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+            {[
+              { icon: Instagram, label: "Instagram", href: "https://instagram.com" },
+              { icon: Globe, label: "Website", href: "https://tickr.ao" },
+              { icon: Phone, label: "WhatsApp", href: "https://wa.me/244923456789" },
+            ].map(({ icon: Icon, label, href }) => (
+              <a key={label} href={href} target="_blank" rel="noreferrer" className="rounded-2xl bg-card p-2">
+                <span className="mx-auto grid size-9 place-items-center rounded-full bg-primary text-primary-foreground"><Icon className="size-4" /></span>
+                <p className="mt-1 text-[10px] font-bold">{label}</p>
+              </a>
+            ))}
+          </div>
         </section>
 
         <Link
