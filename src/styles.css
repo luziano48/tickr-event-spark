@@ -132,70 +132,16 @@
   }
 }
 
-/* Animate only page content; the floating navigation keeps its position. */
-:root {
-  --page-transition-duration: 220ms;
-  --page-transition-ease: cubic-bezier(0.22, 1, 0.36, 1);
-}
-
+/* Animate only page content on mount; the floating navigation keeps its position. */
 .tickr-page-content {
-  view-transition-name: tickr-page;
-}
-
-::view-transition-group(root) {
-  animation: none;
-}
-
-::view-transition-old(root) {
-  display: none;
-}
-
-::view-transition-new(root) {
-  animation: none;
-}
-
-::view-transition-group(tickr-page) {
-  animation: none;
-}
-
-::view-transition-image-pair(tickr-page) {
-  isolation: isolate;
-}
-
-::view-transition-old(tickr-page) {
-  animation: tickr-page-out 100ms ease-out both;
-  mix-blend-mode: normal;
-}
-
-::view-transition-new(tickr-page) {
-  animation: tickr-page-in var(--page-transition-duration) var(--page-transition-ease) both;
-  mix-blend-mode: normal;
-}
-
-@keyframes tickr-page-out {
-  to { opacity: 0; }
+  animation: tickr-page-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes tickr-page-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@supports not (view-transition-name: tickr-page) {
-  .tickr-page-content {
-    animation: tickr-page-in var(--page-transition-duration) var(--page-transition-ease) both;
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tickr-page-content {
-    view-transition-name: none;
-    animation: none;
-  }
-
-  ::view-transition-group(*),
-  ::view-transition-old(*),
-  ::view-transition-new(*) {
-    animation: none;
-  }
+  .tickr-page-content { animation: none; }
 }
