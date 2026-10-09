@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { loadCreatedEvents } from "@/data/created-events";
+import { discoverEvents } from "@/data/discovery";
 import { events } from "@/data/events";
 
 export const eventCategories = ["Todos", "MÚSICA", "CULTURA", "FESTIVAL", "NEGÓCIOS"];
@@ -11,11 +12,7 @@ export function useEventSearch() {
   const [created, setCreated] = useState([]);
   useEffect(() => setCreated(loadCreatedEvents()), []);
 
-  const filteredEvents = [...created, ...events].filter((event) => {
-    const matchesCategory = category === "Todos" || event.category === category;
-    const matchesQuery = event.title.toLowerCase().includes(query.toLowerCase());
-    return matchesCategory && matchesQuery;
-  });
+  const filteredEvents = discoverEvents([...created, ...events], query, category);
 
   return {
     query,

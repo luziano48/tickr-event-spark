@@ -5,19 +5,6 @@ import afro from "@/assets/afro.jpg";
 import tech from "@/assets/tech.jpg";
 export const events = [
   {
-    id: "festival-luanda",
-    title: "Crie um evento do zero com a Tickr!",
-    category: "FESTIVAL",
-    date: "A melhor data!",
-    time: "16:00",
-    city: "Em qualquer lugar",
-    venue: "Marginal de Luanda",
-    price: "Kz 10.000",
-    image: festival,
-    description:
-      "Encontre os melhores fornecedores, serviços e soluções para criar o seu evento perfeito.",
-  },
-  {
     id: "ninho-live",
     title: "Ninho Live in Luanda",
     category: "MÚSICA",

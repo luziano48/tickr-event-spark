@@ -1,4 +1,6 @@
 import { events } from "./events";
 
-export const featuredEvent = events[0];
-export const secondaryEvents = events.slice(1);
+import officialCover from "@/assets/tick perfil.PNG";
+
+export const featuredEvent = { id: "festival-luanda", title: "A sua próxima experiência começa aqui.", image: officialCover };
+export const secondaryEvents = events;
