@@ -59,16 +59,14 @@ function Home() {
           <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black/80 via-black/35 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 space-y-3 p-4 text-white">
             <span className="inline-block rounded-md bg-black/45 px-2 py-1 text-[10px] font-bold tracking-wider text-primary">
-              TICKR EVENT
+              TICKR OFICIAL
             </span>
             <h1 className="text-2xl leading-tight font-extrabold">{featuredEvent.title}</h1>
             <p className="flex items-center gap-1.5 text-xs text-white/85">
-              <Calendar className="size-3.5" /> {featuredEvent.date}
-              <MapPin className="ml-1.5 size-3.5" /> {featuredEvent.city}
+              <BadgeCheck className="size-3.5" /> Novidades, guias e comunidade
             </p>
             <Link
-              to="/evento/$id"
-              params={{ id: featuredEvent.id }}
+              to="/tickr"
               className="grad-primary glow flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-bold text-primary-foreground"
             >
               Ver perfil <ArrowRight className="size-4" />
@@ -85,7 +83,7 @@ function Home() {
               Novidades da Tickr
             </h2>
           </div>
-          <Link to="/evento/$id" params={{ id: featuredEvent.id }} className="text-xs font-bold text-primary">
+          <Link to="/tickr" className="text-xs font-bold text-primary">
             Ver perfil
           </Link>
         </div>
