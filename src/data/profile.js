@@ -20,8 +20,8 @@ export const profileStats = [
 
 export const organizerEvents = [
   { event: events[0], sold: "2.8k ingressos", status: "Ativo" },
-  { event: events[3], sold: "1.2k ingressos", status: "Ativo" },
-  { event: events[4], sold: "800 ingressos", status: "Rascunho" },
+  { event: events[2], sold: "1.2k ingressos", status: "Ativo" },
+  { event: events[3], sold: "800 ingressos", status: "Rascunho" },
 ];
 
 export const publishedEvents = organizerEvents.filter(({ status }) => status === "Ativo");
