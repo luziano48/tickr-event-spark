@@ -1,9 +1,9 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Plus, QrCode, Search, User } from "lucide-react";
+import { Compass, Home, Plus, QrCode, User } from "lucide-react";
 import { useEffect, useState } from "react";
 const items = [
   { to: "/", label: "Início", icon: Home },
-  { to: "/explorar", label: "Explorar", icon: Search },
+  { to: "/explorar", label: "Explorar", icon: Compass },
   { to: "/criar", label: "Criar", icon: Plus },
   { to: "/eventos", label: "Eventos", icon: QrCode },
   { to: "/perfil", label: "Perfil", icon: User },
