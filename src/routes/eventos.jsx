@@ -1,582 +1,179 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  Activity,
-  BadgeCheck,
-  Calendar,
-  CheckCircle2,
-  ChevronDown,
-  Lock,
-  LockOpen,
-  MoreVertical,
-  QrCode,
-  RefreshCw,
-  ScanLine,
-  Ticket as TicketIcon,
-  TrendingUp,
-  Users,
-} from "lucide-react";
+import * as Dialog from "@radix-ui/react-dialog";
+import { ArrowDownLeft, ArrowUpRight, CalendarDays, Check, ChevronDown, LockKeyhole, LockKeyholeOpen, MapPin, MoreHorizontal, Plus, QrCode, ScanLine, Search, Ticket, TrendingUp, Users, Wallet, X } from "lucide-react";
 import { Screen } from "@/components/tickr/Screen";
-import {
-  getEventDashboard,
-  organizerDashboardEvents,
-} from "@/data/eventos";
+import { Button } from "@/components/ui/button";
+import { getEventDashboard, organizerDashboardEvents } from "@/data/eventos";
 
 export const Route = createFileRoute("/eventos")({
-  head: () => ({
-    meta: [
-      { title: "Painel do evento | Tickr" },
-      {
-        name: "description",
-        content:
-          "Acompanhe vendas, check-ins, ingressos e transações do seu evento em tempo real na Tickr.",
-      },
-      { property: "og:title", content: "Painel do evento | Tickr" },
-      {
-        property: "og:description",
-        content: "Gestão de vendas, check-ins e ingressos do seu evento na Tickr.",
-      },
-    ],
-  }),
+  head: () => ({ meta: [
+    { title: "Meus eventos · Gestão | Tickr" },
+    { name: "description", content: "Gerencie os seus eventos, acompanhe vendas e consulte ingressos e entradas na Tickr." },
+    { property: "og:title", content: "Meus eventos · Gestão | Tickr" },
+    { property: "og:description", content: "Os seus eventos, vendas e participantes organizados num só lugar." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary_large_image" },
+  ] }),
   component: Eventos,
 });
 
 const fmt = (value) => new Intl.NumberFormat("pt-PT").format(value);
 const fmtKz = (value) => `Kz ${fmt(value)}`;
-
-const ticketFilters = [
-  { id: "vendidos", label: "Vendidos" },
-  { id: "escaneados", label: "Escaneados" },
-  { id: "porUsar", label: "Por Usar" },
-  { id: "cancelados", label: "Cancelados" },
-];
-
 const statusStyles = {
-  Vendido: "bg-primary/15 text-primary",
-  Usado: "bg-teal/15 text-teal",
-  Cancelado: "bg-destructive/10 text-destructive",
+  Vendido: "bg-success-soft text-primary",
+  Usado: "bg-info-soft text-info",
+  Cancelado: "bg-danger-soft text-destructive",
 };
+const statusLabels = { Vendido: "Por usar", Usado: "Entrada validada", Cancelado: "Cancelado" };
+const tabs = [{ id: "resumo", label: "Resumo" }, { id: "ingressos", label: "Ingressos" }, { id: "atividade", label: "Atividade" }];
+const filters = [{ id: "todos", label: "Todos" }, { id: "Vendido", label: "Por usar" }, { id: "Usado", label: "Validados" }, { id: "Cancelado", label: "Cancelados" }];
 
-const eventStatusStyles = {
-  Ativo: "bg-primary/15 text-primary",
-  Pausado: "bg-surface-2 text-muted-foreground",
-  Encerrado: "bg-surface-2 text-muted-foreground",
-};
-
-const eventStatusDot = {
-  Ativo: "bg-primary",
-  Pausado: "bg-muted-foreground",
-  Encerrado: "bg-muted-foreground",
-};
-
-function smoothPath(points) {
-  if (points.length < 2) return "";
-  let d = `M ${points[0][0]} ${points[0][1]}`;
-  for (let i = 0; i < points.length - 1; i += 1) {
-    const p0 = points[Math.max(0, i - 1)];
-    const p1 = points[i];
-    const p2 = points[i + 1];
-    const p3 = points[Math.min(points.length - 1, i + 2)];
-    const c1x = p1[0] + (p2[0] - p0[0]) / 6;
-    const c1y = p1[1] + (p2[1] - p0[1]) / 6;
-    const c2x = p2[0] - (p3[0] - p1[0]) / 6;
-    const c2y = p2[1] - (p3[1] - p1[1]) / 6;
-    d += ` C ${c1x} ${c1y} ${c2x} ${c2y} ${p2[0]} ${p2[1]}`;
-  }
-  return d;
-}
-
-function AreaChart({ data }) {
-  const gradientId = `chart-fill-${data.length}-${data[0]}`;
-  const W = 320;
-  const H = 150;
-  const padL = 26;
-  const padR = 10;
-  const padT = 10;
-  const padB = 16;
-  const max = 800;
-  const x = (i) => padL + (i * (W - padL - padR)) / (data.length - 1);
-  const y = (v) => padT + (1 - Math.min(v, max) / max) * (H - padT - padB);
-  const points = data.map((v, i) => [x(i), y(v)]);
-  const line = smoothPath(points);
-  const area = `${line} L ${x(data.length - 1)} ${y(0)} L ${x(0)} ${y(0)} Z`;
-  const last = points[points.length - 1];
-
-  return (
-    <div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
-        <defs>
-          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.28" />
-            <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        {[0, 200, 400, 600, 800].map((tick) => (
-          <g key={tick}>
-            <line
-              x1={padL}
-              x2={W - padR}
-              y1={y(tick)}
-              y2={y(tick)}
-              className="stroke-border"
-              strokeDasharray={tick === 0 ? "0" : "3 4"}
-              strokeWidth="1"
-            />
-            <text
-              x={padL - 4}
-              y={y(tick) + 3}
-              textAnchor="end"
-              className="fill-muted-foreground text-[8px]"
-            >
-              {tick}
-            </text>
-          </g>
-        ))}
-        <path d={area} fill={`url(#${gradientId})`} />
-        <path
-          d={line}
-          fill="none"
-          stroke="var(--primary)"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-        />
-        <circle cx={last[0]} cy={last[1]} r="4" fill="var(--primary)" />
-        <circle cx={last[0]} cy={last[1]} r="7" fill="var(--primary)" opacity="0.2" />
-      </svg>
-      <div className="mt-1 flex justify-between pl-6 pr-1 text-[9px] text-muted-foreground">
-        <span>10h</span>
-        <span>14h</span>
-        <span>18h</span>
-        <span>22h</span>
-      </div>
-    </div>
-  );
-}
-
-function Donut({ percent }) {
-  const radius = 30;
-  const circumference = 2 * Math.PI * radius;
-  const gradientId = `donut-${percent}`;
-  return (
-    <div className="relative size-24 shrink-0">
-      <svg viewBox="0 0 80 80" className="size-full -rotate-90">
-        <defs>
-          <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="var(--mint)" />
-            <stop offset="100%" stopColor="var(--primary)" />
-          </linearGradient>
-        </defs>
-        <circle
-          cx="40"
-          cy="40"
-          r={radius}
-          fill="none"
-          strokeWidth="9"
-          className="stroke-border"
-        />
-        <circle
-          cx="40"
-          cy="40"
-          r={radius}
-          fill="none"
-          strokeWidth="9"
-          strokeLinecap="round"
-          stroke={`url(#${gradientId})`}
-          strokeDasharray={circumference}
-          strokeDashoffset={circumference * (1 - percent / 100)}
-          className="transition-all duration-700"
-        />
-      </svg>
-      <div className="absolute inset-0 grid place-items-center text-center">
-        <div>
-          <p className="text-xl font-extrabold leading-none">{percent}%</p>
-          <p className="text-[10px] text-muted-foreground">Ocupado</p>
-        </div>
-      </div>
-    </div>
-  );
+function TrendChart({ event, mode }) {
+  const data = mode === "vendas" ? event.salesSeries : event.checkinsSeries;
+  const max = Math.max(...data, 1);
+  const points = data.map((value, index) => `${24 + index * 288 / (data.length - 1)},${128 - value / max * 104}`).join(" ");
+  return <div className="mt-5">
+    <svg viewBox="0 0 336 152" role="img" aria-label={mode === "vendas" ? "Evolução das vendas das 10h às 22h" : "Evolução das entradas das 10h às 22h"} className="w-full overflow-visible">
+      {[24, 76, 128].map((y, index) => <g key={y}>
+        <line x1="24" x2="312" y1={y} y2={y} className="stroke-border" strokeDasharray="3 5" />
+        <text x="20" y={y + 3} textAnchor="end" className="fill-muted-foreground text-[8px]">{fmt(Math.round(max * (1 - index / 2)))}</text>
+      </g>)}
+      <polygon points={`24,128 ${points} 312,128`} className={mode === "vendas" ? "fill-success-soft" : "fill-info-soft"} />
+      <polyline points={points} fill="none" className={mode === "vendas" ? "stroke-primary" : "stroke-info"} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+      {["10h", "14h", "18h", "22h"].map((label, index) => <text key={label} x={24 + index * 96} y="148" textAnchor="middle" className="fill-muted-foreground text-[9px]">{label}</text>)}
+    </svg>
+  </div>;
 }
 
 function Eventos() {
   const [eventId, setEventId] = useState(organizerDashboardEvents[0].id);
-  const [eventMenuOpen, setEventMenuOpen] = useState(false);
-  const [filter, setFilter] = useState("vendidos");
-  const [openTicketMenu, setOpenTicketMenu] = useState(null);
+  const [tab, setTab] = useState("resumo");
+  const [chartMode, setChartMode] = useState("vendas");
+  const [filter, setFilter] = useState("todos");
+  const [query, setQuery] = useState("");
   const [salesState, setSalesState] = useState({});
-  const [confirmClose, setConfirmClose] = useState(false);
-  const [showAllTransactions, setShowAllTransactions] = useState(false);
-
-  const event = getEventDashboard(eventId);
-  const closed = Boolean(salesState[event.id]);
   const [ticketsByEvent, setTicketsByEvent] = useState({});
+  const [confirmClose, setConfirmClose] = useState(false);
+  const [selectedTicketId, setSelectedTicketId] = useState(null);
+  const event = getEventDashboard(eventId);
   const tickets = ticketsByEvent[event.id] ?? event.tickets;
-  const currentStatus = closed ? "Encerrado" : event.status;
+  const closed = salesState[event.id] ?? event.status !== "Ativo";
+  const percent = Math.min(100, Math.round(event.sold / event.capacity * 100));
+  const currentStatus = closed ? "Vendas pausadas" : "Vendas abertas";
+  const selectedTicket = tickets.find((ticket) => ticket.id === selectedTicketId);
+  const visibleTickets = tickets.filter((ticket) => (filter === "todos" || ticket.status === filter) && `${ticket.name} ${ticket.type}`.toLocaleLowerCase("pt-PT").includes(query.trim().toLocaleLowerCase("pt-PT")));
 
-  const capacity = event.capacity;
-  const percent = Math.min(100, Math.round((event.sold / capacity) * 100));
+  function changeEvent(id) {
+    setEventId(id);
+    setQuery("");
+    setFilter("todos");
+    setSelectedTicketId(null);
+    setConfirmClose(false);
+  }
+  function updateTicket(status) {
+    setTicketsByEvent((state) => ({ ...state, [event.id]: tickets.map((ticket) => ticket.id === selectedTicketId ? { ...ticket, status } : ticket) }));
+    setSelectedTicketId(null);
+  }
 
-  const visibleTickets = tickets.filter((ticket) => {
-    if (filter === "escaneados") return ticket.status === "Usado";
-    if (filter === "cancelados") return ticket.status === "Cancelado";
-    if (filter === "porUsar") return ticket.status === "Vendido";
-    return ticket.status !== "Cancelado";
-  });
+  return <Screen>
+    <header className="flex items-center justify-between gap-3 px-5 pb-5 pt-6">
+      <div><p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-primary">Área do organizador</p><h1 className="text-2xl font-bold">Meus eventos</h1></div>
+      <Button asChild className="size-10 rounded-full bg-primary text-primary-foreground" title="Criar evento"><Link to="/criar" aria-label="Criar evento"><Plus className="size-5" /></Link></Button>
+    </header>
+    <main className="px-5 pb-6">
+      <div className="relative">
+        <label htmlFor="managed-event" className="sr-only">Selecionar evento</label>
+        <select id="managed-event" value={eventId} onChange={(e) => changeEvent(e.target.value)} className="w-full appearance-none rounded-lg border border-border bg-card py-3 pl-4 pr-10 text-sm font-semibold outline-none focus:ring-2 focus:ring-ring">
+          {organizerDashboardEvents.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
+        </select>
+        <ChevronDown className="pointer-events-none absolute right-4 top-3.5 size-4 text-muted-foreground" />
+      </div>
 
-  const transactions = showAllTransactions
-    ? event.transactions
-    : event.transactions.slice(0, 3);
-
-  const filterCount = (id) =>
-    tickets.filter((ticket) => {
-      if (id === "escaneados") return ticket.status === "Usado";
-      if (id === "cancelados") return ticket.status === "Cancelado";
-      if (id === "porUsar") return ticket.status === "Vendido";
-      return ticket.status !== "Cancelado";
-    }).length;
-
-  const updateTicket = (id, status) => {
-    setTicketsByEvent((state) => ({
-      ...state,
-      [event.id]: tickets.map((ticket) =>
-        ticket.id === id ? { ...ticket, status } : ticket,
-      ),
-    }));
-    setOpenTicketMenu(null);
-  };
-
-  return (
-    <Screen>
-      <header className="flex items-center justify-between px-4 pt-5 pb-4">
-        <div>
-          <p className="text-sm font-bold">Meus eventos</p>
-          <p className="text-[11px] text-muted-foreground">Painel de gestão em tempo real</p>
+      <section className="flex items-center gap-4 py-6">
+        <img src={event.image} alt={event.title} className="size-20 shrink-0 rounded-lg object-cover" />
+        <div className="min-w-0">
+          <p className={`mb-2 inline-flex items-center gap-1.5 text-[11px] font-semibold ${closed ? "text-warning" : "text-primary"}`}><span className={`size-1.5 rounded-full ${closed ? "bg-warning" : "bg-primary"}`} />{currentStatus}</p>
+          <h2 className="text-lg font-bold leading-snug">{event.title}</h2>
+          <p className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground"><CalendarDays className="size-3.5 shrink-0" />{event.date}</p>
+          <p className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground"><MapPin className="size-3.5 shrink-0" />{event.venue || event.meta}</p>
         </div>
-        <Link
-          to="/ingressos"
-          aria-label="Ver o meu ingresso com QR Code"
-          className="grid size-9 place-items-center rounded-full bg-surface-2 text-primary"
-        >
-          <QrCode className="size-4" />
-        </Link>
-      </header>
+      </section>
 
-      <main className="px-4">
-        {/* CABECALHO DO EVENTO: imagem, titulo, meta e seletor de estado/evento. */}
-        <section className="rounded-3xl bg-card p-4">
-          <div className="flex items-start gap-3">
-            <img
-              src={event.image}
-              alt={event.title}
-              className="size-20 shrink-0 rounded-2xl object-cover"
-            />
-            <div className="min-w-0 flex-1">
-              <div className="flex items-start justify-between gap-2">
-                <h1 className="truncate text-lg font-extrabold leading-tight">{event.title}</h1>
-                <div className="relative shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEventMenuOpen((open) => !open);
-                      setOpenTicketMenu(null);
-                    }}
-                    aria-expanded={eventMenuOpen}
-                    aria-label="Mudar de evento"
-                    className={`flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[11px] font-bold ${eventStatusStyles[currentStatus]}`}
-                  >
-                    <span className={`size-1.5 rounded-full ${eventStatusDot[currentStatus]}`} />
-                    {currentStatus}
-                    <ChevronDown className="size-3" />
-                  </button>
-                  {eventMenuOpen ? (
-                    <div className="absolute right-0 z-30 mt-2 w-56 overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
-                      <p className="px-3 pt-2.5 pb-1 text-[10px] font-bold text-muted-foreground">
-                        Mudar de evento
-                      </p>
-                      {organizerDashboardEvents.map((item) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => {
-                            setEventId(item.id);
-                            setEventMenuOpen(false);
-                            setFilter("vendidos");
-                            setConfirmClose(false);
-                          }}
-                          className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs hover:bg-surface ${
-                            item.id === event.id ? "bg-surface-2 font-bold" : ""
-                          }`}
-                        >
-                          <span
-                            className={`size-1.5 shrink-0 rounded-full ${
-                              eventStatusDot[closed && item.id === event.id ? "Encerrado" : item.status]
-                            }`}
-                          />
-                          <span className="min-w-0 flex-1 truncate">{item.title}</span>
-                          {item.id === event.id ? (
-                            <CheckCircle2 className="size-3.5 text-primary" />
-                          ) : null}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">{event.meta}</p>
-              <p className="mt-1.5 flex items-center gap-1.5 text-[11px] font-semibold">
-                <Calendar className="size-3.5 text-primary" /> {event.date}
-              </p>
-            </div>
-          </div>
+      <div className="grid grid-cols-3 divide-x divide-border border-y border-border py-4">
+        {[{ icon: Ticket, value: fmt(event.sold), label: "Vendidos", color: "text-primary" }, { icon: ScanLine, value: fmt(event.checkins), label: "Entradas", color: "text-info" }, { icon: Users, value: fmt(event.capacity), label: "Capacidade", color: "text-foreground" }].map(({ icon: Icon, value, label, color }) => <div key={label} className="px-2 first:pl-0 last:pr-0">
+          <Icon className={`mb-2 size-4 ${color}`} /><p className="text-xl font-bold tabular-nums">{value}</p><p className="mt-1 text-[10px] text-muted-foreground">{label}</p>
+        </div>)}
+      </div>
+
+      <nav aria-label="Gestão do evento" className="mt-5 grid grid-cols-3 border-b border-border">
+        {tabs.map((item) => <Button key={item.id} onClick={() => setTab(item.id)} aria-pressed={tab === item.id} className={`min-h-11 border-b-2 text-xs ${tab === item.id ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>{item.label}{item.id === "ingressos" && <span className="text-[10px] text-muted-foreground">{tickets.length}</span>}</Button>)}
+      </nav>
+
+      {tab === "resumo" && <div className="pt-6">
+        <section>
+          <div className="flex items-center justify-between gap-3"><h3 className="text-sm font-bold">Ocupação do evento</h3><span className="text-lg font-bold text-primary">{percent}%</span></div>
+          <progress value={event.sold} max={event.capacity} aria-label="Ingressos vendidos em relação à capacidade" className="event-capacity mt-3 h-2 w-full overflow-hidden rounded-full" />
+          <div className="mt-2 flex justify-between gap-2 text-[11px] text-muted-foreground"><span>{fmt(event.sold)} vendidos</span><span>{fmt(Math.max(0, event.capacity - event.sold))} disponíveis</span></div>
         </section>
-
-        {/* OCUPACAO: donut animado + pessoas, capacidade e status do evento. */}
-        <section className="mt-3 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-3xl bg-card p-4 sm:col-span-2">
-            <div className="flex items-center gap-4">
-              <Donut percent={percent} />
-              <div className="flex-1">
-                <span className="grid size-9 place-items-center rounded-xl bg-primary/15">
-                  <Users className="size-4 text-primary" />
-                </span>
-                <p className="mt-2 text-2xl font-extrabold leading-none">
-                  {fmt(event.sold)} <span className="text-sm font-semibold text-muted-foreground">/ {fmt(capacity)}</span>
-                </p>
-                <p className="mt-1 text-[11px] text-muted-foreground">Pessoas · ingressos vendidos</p>
-              </div>
-            </div>
+        <section className="mt-7 border-t border-border pt-5">
+          <div className="flex items-center justify-between gap-3"><h3 className="text-sm font-bold">Movimento do dia</h3><span className="flex items-center gap-1 text-[10px] font-semibold text-primary"><TrendingUp className="size-3" />{event.salesGrowth}</span></div>
+          <div className="mt-4 flex gap-1 rounded-lg bg-surface-2 p-1">
+            {[{ id: "vendas", label: "Vendas", icon: Ticket }, { id: "entradas", label: "Entradas", icon: ScanLine }].map(({ id, label, icon: Icon }) => <Button key={id} onClick={() => setChartMode(id)} aria-pressed={chartMode === id} className={`min-h-9 flex-1 rounded-md text-xs ${chartMode === id ? "bg-card text-foreground" : "text-muted-foreground"}`}><Icon className="size-3.5" />{label}</Button>)}
           </div>
-          <div className="grid gap-3">
-            <div className="rounded-3xl bg-card p-4">
-              <p className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground">
-                <span className={`size-1.5 rounded-full ${eventStatusDot[currentStatus]}`} /> Capacidade
-              </p>
-              <p className="mt-2 flex items-center gap-2 text-xl font-extrabold">
-                <Users className="size-4 text-primary" /> {fmt(capacity)}
-              </p>
-              <p className="mt-0.5 text-[10px] text-muted-foreground">Total de lugares</p>
-            </div>
-            <div className="rounded-3xl bg-card p-4">
-              <p className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground">
-                <Activity className="size-3.5 text-primary" /> Status do Evento
-              </p>
-              <p className="mt-2 text-xl font-extrabold">{currentStatus}</p>
-              <p className="mt-0.5 text-[10px] text-muted-foreground">
-                {closed ? "Vendas fechadas" : currentStatus === "Pausado" ? "Vendas pausadas" : "Em andamento"}
-              </p>
-            </div>
-          </div>
+          <TrendChart event={event} mode={chartMode} />
         </section>
-
-        {/* GRAFICOS: vendas e check-ins com serie suave e gradiente. */}
-        <section className="mt-3 grid gap-3 sm:grid-cols-2">
-          <div className="rounded-3xl bg-card p-4">
-            <div className="flex items-center justify-between">
-              <p className="flex items-center gap-1.5 text-xs font-bold">
-                <TrendingUp className="size-4 text-primary" /> Gráfico de Vendas
-              </p>
-              <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-[10px] font-bold text-primary">
-                <TrendingUp className="size-3" /> {event.salesGrowth}
-              </span>
-            </div>
-            <AreaChart data={event.salesSeries} />
-          </div>
-          <div className="rounded-3xl bg-card p-4">
-            <div className="flex items-center justify-between">
-              <p className="flex items-center gap-1.5 text-xs font-bold">
-                <ScanLine className="size-4 text-primary" /> Gráfico de Check-ins
-              </p>
-              <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-[10px] font-bold text-primary">
-                <BadgeCheck className="size-3" /> {fmt(event.checkins)} Check-ins
-              </span>
-            </div>
-            <AreaChart data={event.checkinsSeries} />
-          </div>
+        <div className="mt-6 grid grid-cols-2 gap-3">
+          <Button asChild className="min-h-11 rounded-lg bg-primary px-3 text-xs text-primary-foreground"><Link to="/scanner"><ScanLine className="size-4" />Validar entrada</Link></Button>
+          <Button onClick={() => setTab("ingressos")} className="min-h-11 rounded-lg border border-border bg-card px-3 text-xs"><Users className="size-4" />Participantes</Button>
+        </div>
+        <section className="mt-6 flex items-center justify-between gap-4 border-t border-border pt-5">
+          <div><h3 className="text-xs font-bold">Vendas de ingressos</h3><p className="mt-1 text-[11px] text-muted-foreground">{closed ? "Pausadas neste painel" : "Abertas neste painel"}</p></div>
+          <Button onClick={() => closed ? setSalesState((state) => ({ ...state, [event.id]: false })) : setConfirmClose(true)} className={`min-h-10 shrink-0 rounded-lg border border-border px-3 text-xs ${closed ? "text-primary" : "text-muted-foreground"}`}>
+            {closed ? <LockKeyholeOpen className="size-3.5" /> : <LockKeyhole className="size-3.5" />}{closed ? "Reabrir vendas" : "Pausar vendas"}
+          </Button>
         </section>
+      </div>}
 
-        {/* LISTA DE INGRESSOS: filtros funcionais e menu de acoes por ingresso. */}
-        <section className="mt-3 rounded-3xl bg-card p-4">
-          <div className="flex items-center justify-between gap-2">
-            <p className="flex items-center gap-1.5 text-xs font-bold">
-              <TicketIcon className="size-4 text-primary" /> Lista de Ingressos Vendidos
-            </p>
-          </div>
-          <nav aria-label="Filtrar ingressos" className="no-scrollbar mt-3 flex gap-2 overflow-x-auto pb-1">
-            {ticketFilters.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setFilter(item.id)}
-                aria-pressed={filter === item.id}
-                className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold transition-colors ${
-                  filter === item.id
-                    ? "grad-primary text-primary-foreground"
-                    : "border border-border text-muted-foreground"
-                }`}
-              >
-                <span
-                  className={`size-1.5 rounded-full ${
-                    filter === item.id ? "bg-primary-foreground" : "bg-muted-foreground"
-                  }`}
-                />
-                {item.label}
-                <span className={filter === item.id ? "opacity-80" : ""}>{filterCount(item.id)}</span>
-              </button>
-            ))}
-          </nav>
+      {tab === "ingressos" && <section className="pt-5">
+        <div className="flex items-center justify-between gap-2"><h3 className="text-sm font-bold">Participantes</h3><span className="text-[11px] text-muted-foreground">{visibleTickets.length} de {tickets.length}</span></div>
+        <div className="relative mt-4"><Search className="absolute left-3 top-3 size-4 text-muted-foreground" /><input type="search" aria-label="Pesquisar participante" placeholder="Nome ou tipo de ingresso" value={query} onChange={(e) => setQuery(e.target.value)} className="h-10 w-full rounded-lg border border-border bg-card pl-9 pr-3 text-xs outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring" /></div>
+        <div className="no-scrollbar mt-3 flex gap-2 overflow-x-auto pb-2" aria-label="Filtrar participantes">
+          {filters.map((item) => <Button key={item.id} aria-pressed={filter === item.id} onClick={() => setFilter(item.id)} className={`min-h-8 shrink-0 rounded-md px-2.5 text-[11px] ${filter === item.id ? "bg-success-soft text-primary" : "text-muted-foreground hover:bg-accent"}`}>{item.label}</Button>)}
+        </div>
+        <ul className="mt-2 divide-y divide-border">
+          {visibleTickets.map((ticket) => <li key={ticket.id} className="flex items-center gap-3 py-4">
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-surface-2 text-[11px] font-bold text-primary">{ticket.initials}</span>
+            <div className="min-w-0 flex-1"><p className="text-xs font-bold">{ticket.name}</p><p className="mt-1 text-[10px] text-muted-foreground">{ticket.type} · {fmtKz(ticket.price)}</p><span className={`mt-1.5 inline-flex rounded px-1.5 py-0.5 text-[9px] font-semibold ${statusStyles[ticket.status]}`}>{statusLabels[ticket.status]}</span></div>
+            <Button aria-label={`Gerir ingresso de ${ticket.name}`} onClick={() => setSelectedTicketId(ticket.id)} className="size-9 shrink-0 rounded-md text-muted-foreground hover:bg-accent"><MoreHorizontal className="size-5" /></Button>
+          </li>)}
+        </ul>
+        {visibleTickets.length === 0 && <div className="py-12 text-center"><Users className="mx-auto mb-3 size-7 text-muted-foreground" /><p className="text-sm font-semibold">Nenhum participante encontrado</p><Button onClick={() => { setQuery(""); setFilter("todos"); }} className="mt-3 text-xs text-primary">Limpar filtros</Button></div>}
+      </section>}
 
-          <ul className="mt-2 divide-y divide-border">
-            {visibleTickets.map((ticket) => (
-              <li key={ticket.id} className="relative flex items-center gap-3 py-3">
-                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">
-                  {ticket.initials}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-bold">{ticket.name}</p>
-                  <p className="text-[10px] text-muted-foreground">{ticket.type}</p>
-                </div>
-                <span
-                  className={`rounded-full px-2 py-1 text-[10px] font-bold ${statusStyles[ticket.status]}`}
-                >
-                  {ticket.status}
-                </span>
-                <span className="w-20 shrink-0 text-right text-xs font-extrabold">
-                  {fmtKz(ticket.price)}
-                </span>
-                <button
-                  type="button"
-                  aria-label={`Ações para ${ticket.name}`}
-                  onClick={() => {
-                    setOpenTicketMenu((current) => (current === ticket.id ? null : ticket.id));
-                    setEventMenuOpen(false);
-                  }}
-                  className="grid size-7 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-surface-2"
-                >
-                  <MoreVertical className="size-4" />
-                </button>
-                {openTicketMenu === ticket.id ? (
-                  <div className="absolute right-0 top-11 z-30 w-44 overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
-                    <button
-                      type="button"
-                      onClick={() => updateTicket(ticket.id, "Usado")}
-                      className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs hover:bg-surface"
-                    >
-                      <ScanLine className="size-3.5 text-primary" /> Marcar como escaneado
-                    </button>
-                    {ticket.status !== "Cancelado" ? (
-                      <button
-                        type="button"
-                        onClick={() => updateTicket(ticket.id, "Cancelado")}
-                        className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs hover:bg-surface"
-                      >
-                        <RefreshCw className="size-3.5 text-destructive" /> Cancelar ingresso
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => updateTicket(ticket.id, "Vendido")}
-                        className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs hover:bg-surface"
-                      >
-                        <RefreshCw className="size-3.5 text-primary" /> Reativar ingresso
-                      </button>
-                    )}
-                  </div>
-                ) : null}
-              </li>
-            ))}
-            {visibleTickets.length === 0 ? (
-              <li className="py-6 text-center text-xs text-muted-foreground">
-                Nenhum ingresso nesta categoria.
-              </li>
-            ) : null}
-          </ul>
-        </section>
+      {tab === "atividade" && <section className="pt-5">
+        <div className="flex items-center justify-between"><h3 className="text-sm font-bold">Últimas transações</h3><Wallet className="size-4 text-primary" /></div>
+        <ul className="mt-3 divide-y divide-border">{event.transactions.map((tx) => <li key={tx.id} className="flex items-center gap-3 py-4"><span className="grid size-9 shrink-0 place-items-center rounded-full bg-success-soft text-primary"><ArrowDownLeft className="size-4" /></span><div className="min-w-0 flex-1"><p className="text-xs font-bold">{tx.name}</p><p className="mt-1 text-[10px] text-muted-foreground">{tx.type} · {tx.time}</p></div><span className="shrink-0 text-xs font-bold tabular-nums">+ {fmtKz(tx.price)}</span></li>)}</ul>
+      </section>}
+      <Button asChild className="mt-7 min-h-10 w-full gap-2 text-xs text-muted-foreground"><Link to="/ingressos"><QrCode className="size-4" />Meus ingressos pessoais<ArrowUpRight className="size-3.5" /></Link></Button>
+    </main>
 
-        {/* ULTIMAS TRANSACOES: lista com alternancia ver todas. */}
-        <section className="mt-3 rounded-3xl bg-card p-4">
-          <div className="flex items-center justify-between">
-            <p className="flex items-center gap-1.5 text-xs font-bold">
-              <RefreshCw className="size-4 text-primary" /> Últimas Transações
-            </p>
-            <button
-              type="button"
-              onClick={() => setShowAllTransactions((value) => !value)}
-              className="flex items-center gap-1 text-[11px] font-bold text-primary"
-            >
-              {showAllTransactions ? "Ver menos" : "Ver todas"}
-              <ChevronDown
-                className={`size-3 transition-transform ${showAllTransactions ? "rotate-180" : ""}`}
-              />
-            </button>
-          </div>
-          <ul className="mt-2 divide-y divide-border">
-            {transactions.map((tx) => (
-              <li key={tx.id} className="flex items-center gap-3 py-3">
-                <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/15">
-                  <TicketIcon className="size-3.5 text-primary" />
-                </span>
-                <p className="w-20 shrink-0 text-[10px] text-muted-foreground">{tx.time}</p>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-bold">{tx.name}</p>
-                </div>
-                <p className="hidden text-[11px] text-muted-foreground sm:block">{tx.type}</p>
-                <p className="w-20 shrink-0 text-right text-xs font-extrabold">{fmtKz(tx.price)}</p>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        {/* FECHAR VENDAS: confirmacao antes de encerrar, com botao de reabertura. */}
-        <section className="mt-3 mb-2">
-          {confirmClose && !closed ? (
-            <div className="rounded-3xl border border-primary/30 bg-primary/5 p-4">
-              <p className="text-xs font-bold">Fechar as vendas de “{event.title}”?</p>
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                Ninguém consegue comprar ingressos depois do fecho. Pode reabrir mais tarde.
-              </p>
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setConfirmClose(false)}
-                  className="rounded-full border border-border py-2.5 text-xs font-bold"
-                >
-                  Voltar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSalesState((state) => ({ ...state, [event.id]: true }));
-                    setConfirmClose(false);
-                  }}
-                  className="grad-primary glow rounded-full py-2.5 text-xs font-bold text-primary-foreground"
-                >
-                  Fechar vendas
-                </button>
-              </div>
-            </div>
-          ) : null}
-          {!confirmClose ? (
-            closed ? (
-              <button
-                type="button"
-                onClick={() => setSalesState((state) => ({ ...state, [event.id]: false }))}
-                className="flex w-full items-center justify-center gap-2 rounded-full border border-border py-4 text-sm font-bold"
-              >
-                <LockOpen className="size-4 text-primary" /> Reabrir Vendas
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setConfirmClose(true)}
-                className="grad-primary glow flex w-full items-center justify-center gap-2 rounded-full py-4 text-sm font-bold text-primary-foreground"
-              >
-                <Lock className="size-4" />
-                <span className="opacity-60">|</span>
-                <span className="opacity-60">✕</span> Fechar Vendas
-              </button>
-            )
-          ) : null}
-        </section>
-      </main>
-    </Screen>
-  );
+    <Dialog.Root open={confirmClose} onOpenChange={setConfirmClose}>
+      <Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-foreground/40 backdrop-blur-sm" /><Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-card p-6">
+        <Dialog.Title className="pr-6 text-lg font-bold">Pausar vendas?</Dialog.Title><Dialog.Description className="mt-3 text-sm text-muted-foreground">As vendas de {event.title} ficarão pausadas neste painel. Pode reabrir a qualquer momento.</Dialog.Description>
+        <div className="mt-6 flex gap-3"><Button onClick={() => setConfirmClose(false)} className="min-h-10 flex-1 rounded-lg border border-border text-xs">Voltar</Button><Button onClick={() => { setSalesState((state) => ({ ...state, [event.id]: true })); setConfirmClose(false); }} className="min-h-10 flex-1 rounded-lg bg-primary text-xs text-primary-foreground">Pausar vendas</Button></div>
+        <Dialog.Close asChild><Button aria-label="Fechar confirmação" className="absolute right-3 top-3 size-8 rounded-md text-muted-foreground"><X className="size-4" /></Button></Dialog.Close>
+      </Dialog.Content></Dialog.Portal>
+    </Dialog.Root>
+    <Dialog.Root open={Boolean(selectedTicket)} onOpenChange={(open) => { if (!open) setSelectedTicketId(null); }}>
+      <Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-foreground/40 backdrop-blur-sm" /><Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-card p-6">
+        <Dialog.Title className="pr-6 text-lg font-bold">{selectedTicket?.name}</Dialog.Title><Dialog.Description className="mt-2 text-xs text-muted-foreground">{selectedTicket?.type} · {selectedTicket ? statusLabels[selectedTicket.status] : ""}</Dialog.Description>
+        <div className="mt-5 grid gap-2">
+          {selectedTicket?.status === "Vendido" && <Button onClick={() => updateTicket("Usado")} className="min-h-11 justify-start rounded-lg bg-success-soft px-3 text-xs text-primary"><Check className="size-4" />Validar entrada</Button>}
+          {selectedTicket?.status === "Cancelado" ? <Button onClick={() => updateTicket("Vendido")} className="min-h-11 justify-start rounded-lg bg-success-soft px-3 text-xs text-primary"><Ticket className="size-4" />Reativar ingresso</Button> : <Button onClick={() => updateTicket("Cancelado")} className="min-h-11 justify-start rounded-lg bg-danger-soft px-3 text-xs text-destructive"><X className="size-4" />Cancelar ingresso</Button>}
+        </div>
+        <Dialog.Close asChild><Button aria-label="Fechar ações do ingresso" className="absolute right-3 top-3 size-8 rounded-md text-muted-foreground"><X className="size-4" /></Button></Dialog.Close>
+      </Dialog.Content></Dialog.Portal>
+    </Dialog.Root>
+  </Screen>;
 }
