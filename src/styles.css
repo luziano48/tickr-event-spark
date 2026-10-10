@@ -137,6 +137,16 @@
   animation: tickr-page-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.event-capacity {
+  appearance: none;
+  border: 0;
+  background: var(--surface-2);
+  color: var(--primary);
+}
+.event-capacity::-webkit-progress-bar { background: var(--surface-2); border-radius: inherit; }
+.event-capacity::-webkit-progress-value { background: var(--primary); border-radius: inherit; }
+.event-capacity::-moz-progress-bar { background: var(--primary); border-radius: inherit; }
+
 @keyframes tickr-page-in {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: none; }

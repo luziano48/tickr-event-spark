@@ -12,3 +12,4 @@
 - Keep the shared Tickr visual language in semantic CSS tokens and the Screen/BottomNav shell so color changes stay consistent across routes.
 - Keep scroll-direction visibility and floating navigation inside BottomNav, with passive frame-throttled listeners, so page content and layouts remain unchanged.
 - - Route changes animate via a CSS mount animation on Screen content (no view transitions), so navigation stays stationary and never flickers.
+- Keep event management in the Eventos route with separate summary, participant and activity views so actions are not mixed with analytics; existing demo data and in-session state remain unchanged.
