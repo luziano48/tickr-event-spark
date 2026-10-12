@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { organizerProfile } from "@/data/profile";
 
-const KEY = "tickr-social";
+const KEY = "tickr-social-v2";
 export const suggestedPeople = [
   { id: "p1", name: "Marta Caculo", role: "Produtora", initials: "MC", mutual: 12 },
   { id: "p2", name: "Pedro N'Gola", role: "DJ", initials: "PN", mutual: 8 },
@@ -8,7 +9,11 @@ export const suggestedPeople = [
   { id: "p4", name: "Rafael Costa", role: "Som & Luz", initials: "RC", mutual: 3 },
 ];
 
-const BASE = { connections: 1280, ratingSum: 4.8 * 126, ratingCount: 126 };
+const BASE = {
+  connections: 0,
+  ratingSum: organizerProfile.rating * organizerProfile.reviewCount,
+  ratingCount: organizerProfile.reviewCount,
+};
 const initial = { connected: false, myStars: 0, people: {} };
 
 export function useSocial() {
@@ -26,7 +31,7 @@ export function useSocial() {
   const peopleConnected = Object.values(state.people).filter(Boolean).length;
   const connections = BASE.connections + (state.connected ? 1 : 0) + peopleConnected;
   const count = BASE.ratingCount + (state.myStars ? 1 : 0);
-  const rating = (BASE.ratingSum + state.myStars) / count;
+  const rating = count ? (BASE.ratingSum + state.myStars) / count : 0;
   return {
     ...state,
     connections,

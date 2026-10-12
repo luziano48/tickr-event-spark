@@ -65,7 +65,6 @@ function EventDetail({ event }) {
     <Screen nav={false}>
       <div className="relative">
         <img src={event.image} alt={event.title} className="h-72 w-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
         <Link to="/explorar" aria-label="Voltar" className="absolute top-5 left-4 grid size-9 place-items-center rounded-full bg-card/90">
           <ArrowLeft className="size-4" />
         </Link>
@@ -73,8 +72,13 @@ function EventDetail({ event }) {
           {event.category}
         </span>
       </div>
-      <main className="-mt-10 relative px-4 pb-32">
+      <main className="relative px-4 pt-5 pb-32">
         <h1 className="text-2xl leading-tight font-extrabold">{event.title}</h1>
+        {event.organizer ? (
+          <Link to="/perfil" className="mt-1 inline-block text-sm font-semibold text-primary">
+            Publicado por {event.organizer}
+          </Link>
+        ) : null}
         <div className="mt-4 grid grid-cols-2 gap-2">
           {info.map(({ icon: Icon, label, value }) => (
             <div key={label} className="rounded-2xl bg-card p-3 shadow-sm">

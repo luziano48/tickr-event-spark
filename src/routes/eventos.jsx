@@ -153,7 +153,9 @@ function Eventos() {
 
       {tab === "atividade" && <section className="pt-5">
         <div className="flex items-center justify-between"><h3 className="text-sm font-bold">Últimas transações</h3><Wallet className="size-4 text-primary" /></div>
-        <ul className="mt-3 divide-y divide-border">{event.transactions.map((tx) => <li key={tx.id} className="flex items-center gap-3 py-4"><span className="grid size-9 shrink-0 place-items-center rounded-full bg-success-soft text-primary"><ArrowDownLeft className="size-4" /></span><div className="min-w-0 flex-1"><p className="text-xs font-bold">{tx.name}</p><p className="mt-1 text-[10px] text-muted-foreground">{tx.type} · {tx.time}</p></div><span className="shrink-0 text-xs font-bold tabular-nums">+ {fmtKz(tx.price)}</span></li>)}</ul>
+        {event.transactions.length ? (
+          <ul className="mt-3 divide-y divide-border">{event.transactions.map((tx) => <li key={tx.id} className="flex items-center gap-3 py-4"><span className="grid size-9 shrink-0 place-items-center rounded-full bg-success-soft text-primary"><ArrowDownLeft className="size-4" /></span><div className="min-w-0 flex-1"><p className="text-xs font-bold">{tx.name}</p><p className="mt-1 text-[10px] text-muted-foreground">{tx.type} · {tx.time}</p></div><span className="shrink-0 text-xs font-bold tabular-nums">+ {fmtKz(tx.price)}</span></li>)}</ul>
+        ) : <p className="mt-4 rounded-lg bg-surface-2 p-4 text-center text-xs text-muted-foreground">Ainda não há transações para este evento.</p>}
       </section>}
       <Button asChild className="mt-7 min-h-10 w-full gap-2 text-xs text-muted-foreground"><Link to="/ingressos"><QrCode className="size-4" />Meus ingressos pessoais<ArrowUpRight className="size-3.5" /></Link></Button>
     </main>

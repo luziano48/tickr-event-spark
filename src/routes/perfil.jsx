@@ -206,10 +206,10 @@ function Perfil() {
 
           <div className="mt-4 grid grid-cols-3 divide-x divide-border text-center">
             <div><p className="text-lg font-extrabold">{organizerEvents.length}</p><p className="text-[10px] text-muted-foreground">Eventos</p></div>
-            <div><p className="text-lg font-extrabold tabular-nums">{(social.connections / 1000).toFixed(2)}k</p><p className="text-[10px] text-muted-foreground">Conexões</p></div>
+            <div><p className="text-lg font-extrabold tabular-nums">{social.connections}</p><p className="text-[10px] text-muted-foreground">Conexões</p></div>
             <div>
-              <p className="flex items-center justify-center gap-1 text-lg font-extrabold">{social.rating.toFixed(2)} <Star className="size-4 fill-primary text-primary" /></p>
-              <p className="text-[10px] text-muted-foreground">{social.ratingCount} estrelas</p>
+              <p className="flex items-center justify-center gap-1 text-lg font-extrabold">{social.rating} <Star className="size-4 fill-primary text-primary" /></p>
+              <p className="text-[10px] text-muted-foreground">Estrelas</p>
             </div>
           </div>
 

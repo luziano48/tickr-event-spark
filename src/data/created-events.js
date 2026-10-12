@@ -6,7 +6,13 @@ const MONTHS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "
 export function loadCreatedEvents() {
   if (typeof window === "undefined") return [];
   try {
-    return JSON.parse(window.localStorage.getItem(STORAGE_KEY) || "[]");
+    const storedEvents = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || "[]");
+    if (!Array.isArray(storedEvents)) return [];
+    return storedEvents.map((event) => ({
+      ...event,
+      organizer: event.organizer || "Luziano Domingos",
+      organizerUsername: event.organizerUsername || "@luziano.events",
+    }));
   } catch {
     return [];
   }
@@ -39,6 +45,8 @@ export function saveCreatedEvent(form, imageData) {
     city: form.city.trim(),
     venue: form.venue.trim(),
     price: min === 0 ? "Grátis" : `Kz ${min.toLocaleString("pt-PT")}`,
+    organizer: "Luziano Domingos",
+    organizerUsername: "@luziano.events",
     image: imageData || festival,
     description: form.description.trim(),
     age: form.age,

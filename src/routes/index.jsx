@@ -3,11 +3,11 @@ import {
   ArrowRight,
   BadgeCheck,
   Calendar,
-  Heart,
   MapPin,
   MessageCircle,
   MessageSquare,
   Search,
+  Star,
 } from "lucide-react";
 import { Screen } from "@/components/tickr/Screen";
 import { Logo } from "@/components/tickr/Logo";
@@ -76,15 +76,9 @@ function Home() {
       </section>
 
       <section className="mt-6" aria-labelledby="announcements-title">
-        <div className="mb-3 flex items-end justify-between px-4">
-          <div>
-            <p className="text-xs font-bold tracking-wider text-primary">PERFIL VERIFICADO</p>
-            <h2 id="announcements-title" className="mt-1 text-lg font-extrabold">
-              Novidades da Tickr
-            </h2>
-          </div>
-          <Link to="/tickr" className="text-xs font-bold text-primary">
-            Ver perfil
+        <div className="mb-3 flex items-end justify-end px-4">
+          <Link to="/tickr" className="flex items-center gap-1 text-xs font-bold text-primary">
+            Ver perfil <ArrowRight className="size-3" />
           </Link>
         </div>
 
@@ -109,7 +103,7 @@ function Home() {
                   {post.category}
                 </span>
                 <div className="flex gap-2 text-muted-foreground">
-                  <Heart className="size-3.5" />
+                  <Star className="size-3.5" />
                   <MessageCircle className="size-3.5" />
                 </div>
               </div>

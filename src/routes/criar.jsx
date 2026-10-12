@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowLeft,
@@ -53,6 +53,9 @@ function Field({ label, error, children, hint }) {
 
 function CriarEvento() {
   const fileInput = useRef(null);
+  const [customCategory, setCustomCategory] = useState("");
+  const [customCategories, setCustomCategories] = useState([]);
+  const [addingCategory, setAddingCategory] = useState(false);
   const {
     form,
     setField,
@@ -75,6 +78,17 @@ function CriarEvento() {
   } = useCreateEvent();
 
   const sending = status === "sending";
+  const categories = [...eventFormCategories, ...customCategories];
+  const addCustomCategory = () => {
+    const category = customCategory.trim().replace(/\s+/g, " ").toLocaleUpperCase("pt-PT");
+    if (!category) return;
+    if (!categories.includes(category)) {
+      setCustomCategories((current) => [...current, category]);
+    }
+    setField("category", category);
+    setCustomCategory("");
+    setAddingCategory(false);
+  };
 
   if (status === "done") {
     return (
@@ -217,13 +231,13 @@ function CriarEvento() {
 
                 <div>
                   <span className="text-xs font-bold">Categoria</span>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {eventFormCategories.map((category) => (
+                  <div className="no-scrollbar mt-2 flex gap-2 overflow-x-auto pb-1">
+                    {categories.map((category) => (
                       <button
                         key={category}
                         type="button"
                         onClick={() => setField("category", category)}
-                        className={`rounded-full px-3 py-1.5 text-[11px] font-bold ${
+                        className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold ${
                           form.category === category
                             ? "bg-primary text-primary-foreground"
                             : "bg-surface-2 text-muted-foreground"
@@ -232,6 +246,42 @@ function CriarEvento() {
                         {category}
                       </button>
                     ))}
+                    {addingCategory ? (
+                      <>
+                        <input
+                          type="text"
+                          maxLength={30}
+                          autoFocus
+                          value={customCategory}
+                          onChange={(e) => setCustomCategory(e.target.value.toLocaleUpperCase("pt-PT"))}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              addCustomCategory();
+                            }
+                          }}
+                          placeholder="NOVA CATEGORIA"
+                          aria-label="Adicionar categoria"
+                          className="w-40 shrink-0 rounded-full border border-border bg-card px-3 py-1.5 text-[11px] uppercase outline-none placeholder:text-muted-foreground focus:border-primary/60"
+                        />
+                        <button
+                          type="button"
+                          onClick={addCustomCategory}
+                          disabled={!customCategory.trim()}
+                          className="shrink-0 rounded-full bg-primary px-3 py-1.5 text-[11px] font-bold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          Adicionar
+                        </button>
+                      </>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => setAddingCategory(true)}
+                      aria-label="Adicionar categoria"
+                      className="grid size-7 shrink-0 place-items-center rounded-full border border-primary/30 text-primary"
+                    >
+                      <Plus className="size-4" />
+                    </button>
                   </div>
                   {errors.category ? (
                     <span className="mt-1 block text-[11px] text-destructive">
