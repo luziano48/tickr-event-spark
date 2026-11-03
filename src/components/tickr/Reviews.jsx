@@ -78,7 +78,9 @@ export function Reviews({ target, title = "Avaliações", requireTicket = null, 
                 <span className="text-sm font-extrabold text-primary">{myReview.stars},0</span>
               </div>
               {myReview.text && <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{myReview.text}</p>}
-              <p className="mt-1 text-[10px] text-muted-foreground">{formatDate(myReview.date)} · editada em {formatDate(myReview.updatedAt)}</p>
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                {formatDate(myReview.date)}{myReview.updatedAt && myReview.updatedAt !== myReview.date ? ` · editada em ${formatDate(myReview.updatedAt)}` : ""}
+              </p>
             </div>
           ) : (
             <button type="button" onClick={() => openForm(null)} className="mt-4 w-full rounded-2xl border border-dashed border-primary/40 p-4 text-center transition-colors hover:bg-primary/5">
