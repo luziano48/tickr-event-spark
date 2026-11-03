@@ -120,9 +120,11 @@ export function Comments({ target, title = "Comentários", placeholder = "Escrev
   );
 }
 
-function CommentBody({ comment, compact = false, onReply, onEdit, onDelete, onReport }) {
+function CommentBody({ comment, compact = false, onReply, onEditSave, onDelete, onReport }) {
   const own = comment.author === SELF_AUTHOR;
   const [replying, setReplying] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState(comment.text);
   return (
     <article className={compact ? "rounded-xl bg-surface-2/60 p-2.5" : "rounded-2xl bg-surface-2/60 p-3"}>
       <div className="flex items-center gap-2">
@@ -139,19 +141,32 @@ function CommentBody({ comment, compact = false, onReply, onEdit, onDelete, onRe
           </p>
         </div>
       </div>
-      {comment.text && <p className="mt-2 text-xs leading-relaxed text-foreground/90">{comment.text}</p>}
-      <div className="mt-2 flex items-center gap-3 text-[10px] font-bold">
-        {onReply && !replying && (
-          <button type="button" onClick={() => { onReply(); setReplying(true); }} className="text-primary">Responder</button>
-        )}
-        {own && onEdit && <button type="button" onClick={onEdit} className="text-muted-foreground">Editar</button>}
-        {own && onDelete && <button type="button" onClick={onDelete} className="text-destructive">Apagar</button>}
-        {!own && onReport && (
-          <button type="button" onClick={onReport} aria-label="Denunciar comentário" className="ml-auto flex items-center gap-1 text-muted-foreground">
-            <Flag className="size-3" /> Denunciar
-          </button>
-        )}
-      </div>
+      {editing ? (
+        <EditComposer
+          value={text}
+          onChange={setText}
+          onSave={() => { onEditSave?.(comment.id, text); setEditing(false); }}
+          onCancel={() => { setText(comment.text); setEditing(false); }}
+        />
+      ) : (
+        <>
+          {comment.text && <p className="mt-2 text-xs leading-relaxed text-foreground/90">{comment.text}</p>}
+          <div className="mt-2 flex items-center gap-3 text-[10px] font-bold">
+            {onReply && !replying && (
+              <button type="button" onClick={() => { onReply(); setReplying(true); }} className="text-primary">Responder</button>
+            )}
+            {own && onEditSave && !comment.edited && (
+              <button type="button" onClick={() => setEditing(true)} className="text-muted-foreground">Editar</button>
+            )}
+            {own && onDelete && <button type="button" onClick={onDelete} className="text-destructive">Apagar</button>}
+            {!own && onReport && (
+              <button type="button" onClick={onReport} aria-label="Denunciar comentário" className="ml-auto flex items-center gap-1 text-muted-foreground">
+                <Flag className="size-3" /> Denunciar
+              </button>
+            )}
+          </div>
+        </>
+      )}
     </article>
   );
 }
