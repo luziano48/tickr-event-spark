@@ -10,6 +10,7 @@ import {
   Pencil,
   PlusCircle,
   Settings,
+  Star,
   X,
   BadgeCheck,
   Instagram,
@@ -18,7 +19,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { Screen } from "@/components/tickr/Screen";
-import { Reviews, Stars } from "@/components/tickr/Reviews";
+import { Reviews } from "@/components/tickr/Reviews";
 import { Comments } from "@/components/tickr/Comments";
 import {
   draftEvents,
@@ -415,13 +416,3 @@ function Perfil() {
     </Screen>
   );
 }
-
-function Star({ className = "size-4" }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
-      <path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8L12 2z" />
-    </svg>
-  );
-}
-
-export { Stars };
