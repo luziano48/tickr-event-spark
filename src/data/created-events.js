@@ -10,7 +10,7 @@ export function loadCreatedEvents() {
     if (!Array.isArray(storedEvents)) return [];
     return storedEvents.map((event) => ({
       ...event,
-      organizer: event.organizer || "Luziano Domingos",
+      organizer: event.organizer || "Tickr Eventos",
       organizerUsername: event.organizerUsername || "@luziano.events",
     }));
   } catch {
@@ -45,7 +45,7 @@ export function saveCreatedEvent(form, imageData) {
     city: form.city.trim(),
     venue: form.venue.trim(),
     price: min === 0 ? "Grátis" : `Kz ${min.toLocaleString("pt-PT")}`,
-    organizer: "Luziano Domingos",
+    organizer: "Tickr Eventos",
     organizerUsername: "@luziano.events",
     image: imageData || festival,
     description: form.description.trim(),

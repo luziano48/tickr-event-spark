@@ -3,7 +3,7 @@ import { events } from "./events";
 import artist from "@/assets/artist.jpg";
 
 export const organizerProfile = {
-  name: "Luziano Domingos",
+  name: "Tickr Eventos",
   username: "@luziano.events",
   location: "Luanda, Angola",
   rating: 0,
