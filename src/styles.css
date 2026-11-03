@@ -132,9 +132,10 @@
   }
 }
 
-/* Animate only page content on mount; the floating navigation keeps its position. */
+/* Animate route content on navigation; the floating navigation stays stationary. */
 .tickr-page-content {
-  animation: tickr-page-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: tickr-page-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: top center;
 }
 
 .event-capacity {
@@ -148,10 +149,15 @@
 .event-capacity::-moz-progress-bar { background: var(--primary); border-radius: inherit; }
 
 @keyframes tickr-page-in {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .tickr-page-content { animation: none; }
+  html { scroll-behavior: auto; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
 }
