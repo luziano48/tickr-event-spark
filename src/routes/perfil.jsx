@@ -26,12 +26,16 @@ import {
 } from "lucide-react";
 import { Screen } from "@/components/tickr/Screen";
 import { AccountMenu } from "@/components/tickr/AccountMenu";
-import { ContentFeedback } from "@/components/tickr/ContentFeedback";
 import { EventStarButton } from "@/components/tickr/EventStarButton";
+import { Reviews } from "@/components/tickr/Reviews";
+import { Comments } from "@/components/tickr/Comments";
 import { publishedEvents } from "@/data/profile";
 import { pendingMessageCount } from "@/data/messages";
 import { useOrganizerProfile } from "@/hooks/use-organizer-profile";
 import { useEventStars } from "@/hooks/use-event-stars";
+import { useReviews } from "@/hooks/use-community";
+
+const PROFILE_TARGET = "perfil:tickr-eventos";
 
 export const Route = createFileRoute("/perfil")({
   head: () => ({
@@ -141,6 +145,7 @@ function Perfil() {
   } = useOrganizerProfile();
   const { starCount } = useEventStars();
   const totalEventStars = publishedEvents.reduce((sum, { event }) => sum + starCount(event.id), 0);
+  const reviewSummary = useReviews(PROFILE_TARGET).summary;
 
   useEffect(() => {
     try {
@@ -150,16 +155,14 @@ function Perfil() {
       setPosts([]);
     }
   }, []);
-
-  const savePosts = (nextPosts) => {
-    setPosts(nextPosts);
+  const savePosts = (next) => {
+    setPosts(next);
     try {
-      window.localStorage.setItem(POSTS_KEY, JSON.stringify(nextPosts));
+      window.localStorage.setItem(POSTS_KEY, JSON.stringify(next));
     } catch {
-      // Keep the current session usable if local storage is unavailable.
+      /* storage unavailable */
     }
   };
-
   const publishPost = (event) => {
     event.preventDefault();
     const text = postDraft.trim();
@@ -191,7 +194,6 @@ function Perfil() {
         </div>
       </header>
 
-      {/* Capa em largura total, com o mesmo enquadramento do perfil oficial. */}
       <button
         type="button"
         onClick={startEditing}
@@ -219,6 +221,7 @@ function Perfil() {
           </span>
         </span>
       </button>
+
       <main>
         <section
           aria-label="Informações do perfil"
@@ -235,6 +238,20 @@ function Perfil() {
           </p>
           <h1 className="mt-4 text-xl font-bold">Criamos experiências para viver.</h1>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{profile.bio}</p>
+          <div className="mt-4 grid grid-cols-2 divide-x divide-border text-center">
+            <div>
+              <p className="text-lg font-extrabold">{publishedEvents.length}</p>
+              <p className="text-[10px] text-muted-foreground">Eventos</p>
+            </div>
+            <div>
+              <p className="text-lg font-extrabold tabular-nums">
+                {reviewSummary.count
+                  ? reviewSummary.average.toLocaleString("pt-PT", { minimumFractionDigits: 1 })
+                  : "—"}
+              </p>
+              <p className="text-[10px] text-muted-foreground">Avaliações</p>
+            </div>
+          </div>
           <button
             type="button"
             onClick={startEditing}
@@ -281,7 +298,6 @@ function Perfil() {
                     <X className="size-4" />
                   </button>
                 </header>
-
                 <div className="px-5">
                   <button
                     type="button"
@@ -310,7 +326,6 @@ function Perfil() {
                     onChange={(event) => changeDraftPhoto(event.target.files?.[0])}
                   />
                 </div>
-
                 <div
                   role="tablist"
                   aria-label="Dados a editar"
@@ -332,7 +347,6 @@ function Perfil() {
                     </button>
                   ))}
                 </div>
-
                 <div className="space-y-4 px-5 py-5">
                   {editSection === "perfil" ? (
                     <>
@@ -421,7 +435,6 @@ function Perfil() {
                     </>
                   )}
                 </div>
-
                 <footer className="sticky bottom-0 flex gap-3 border-t border-border bg-background/95 px-5 py-4 backdrop-blur">
                   <button
                     type="button"
@@ -442,7 +455,7 @@ function Perfil() {
             </div>,
             document.body,
           )}
-        {/* Separadores do perfil normal, alinhados ao padrão do perfil oficial. */}
+
         <div
           role="tablist"
           aria-label="Secções do perfil"
@@ -466,6 +479,28 @@ function Perfil() {
         <div className="px-4 py-5" aria-live="polite">
           {activeTab === "novidades" && (
             <section aria-label="Novidades e eventos" className="space-y-4">
+              <form onSubmit={publishPost} className="rounded-2xl bg-card p-3">
+                <label htmlFor="organizer-post" className="text-xs font-bold">
+                  Partilhar uma novidade
+                </label>
+                <textarea
+                  id="organizer-post"
+                  rows={3}
+                  maxLength={1000}
+                  value={postDraft}
+                  onChange={(event) => setPostDraft(event.target.value)}
+                  placeholder="O que há de novo?"
+                  className="mt-2 w-full resize-y rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary/60"
+                />
+                <button
+                  type="submit"
+                  disabled={postDraft.trim().length < 2}
+                  className="grad-primary mt-2 flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold text-primary-foreground disabled:opacity-50"
+                >
+                  <Send className="size-3.5" />
+                  Publicar
+                </button>
+              </form>
               {posts.length > 0 && (
                 <ul className="space-y-3">
                   {posts.map((post) => (
@@ -557,13 +592,6 @@ function Perfil() {
                   ))}
                 </ul>
               )}
-              <Link
-                to="/criar"
-                className="grad-primary glow flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-bold text-primary-foreground"
-              >
-                <PlusCircle className="size-4" />
-                Criar novo evento
-              </Link>
             </section>
           )}
 
@@ -626,7 +654,10 @@ function Perfil() {
               <p className="mt-2 text-sm text-muted-foreground">
                 Avaliações com estrelas e comentários sobre este organizador.
               </p>
-              <ContentFeedback contentId="tickr-eventos" contentType="profile" />
+              <div className="mt-4 space-y-4">
+                <Reviews target={PROFILE_TARGET} title="Avaliações do organizador" />
+                <Comments target={PROFILE_TARGET} title="Comentários no perfil" />
+              </div>
             </section>
           )}
         </div>

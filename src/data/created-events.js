@@ -10,8 +10,14 @@ export function loadCreatedEvents() {
     if (!Array.isArray(storedEvents)) return [];
     return storedEvents.map((event) => ({
       ...event,
-      organizer: event.organizer === "Luziano Domingos" || !event.organizer ? "Tickr Eventos" : event.organizer,
-      organizerUsername: event.organizerUsername === "@luziano.events" || !event.organizerUsername ? "@tickr.eventos" : event.organizerUsername,
+      organizer:
+        event.organizer === "Luziano Domingos" || !event.organizer
+          ? "Tickr Eventos"
+          : event.organizer,
+      organizerUsername:
+        event.organizerUsername === "@luziano.events" || !event.organizerUsername
+          ? "@tickr.eventos"
+          : event.organizerUsername,
     }));
   } catch {
     return [];
