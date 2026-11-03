@@ -10,30 +10,28 @@ import {
   Pencil,
   PlusCircle,
   Settings,
-  Star,
   X,
   BadgeCheck,
-  UserPlus,
-  UserCheck,
-  Users,
-  Sparkles,
   Instagram,
   Globe,
   Phone,
   Calendar,
 } from "lucide-react";
-import { useSocial, suggestedPeople } from "@/hooks/use-social";
 import { Screen } from "@/components/tickr/Screen";
+import { Reviews, Stars } from "@/components/tickr/Reviews";
+import { Comments } from "@/components/tickr/Comments";
 import {
   draftEvents,
   organizerEvents,
-  organizerProfile,
-  organizerReviews,
-  profileStats,
   publishedEvents,
+  profileStats,
 } from "@/data/profile";
 import { pendingMessageCount } from "@/data/messages";
 import { useOrganizerProfile } from "@/hooks/use-organizer-profile";
+import { useReviews } from "@/hooks/use-community";
+
+// Alvo dos comentários e avaliações do perfil do organizador.
+const PROFILE_TARGET = "perfil:tickr-eventos";
 
 export const Route = createFileRoute("/perfil")({
   head: () => ({
@@ -58,26 +56,10 @@ const tabs = [
   { id: "eventos", label: "Meus eventos" },
   { id: "publicados", label: "Publicados" },
   { id: "rascunhos", label: "Rascunhos" },
-  { id: "avaliacoes", label: "Avaliações" },
 ];
 
 const editFieldClass =
   "mt-1 w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm outline-none placeholder:text-muted-foreground focus:border-primary/60";
-
-function Stars({ value, className = "size-3.5" }) {
-  return (
-    <span className="flex items-center gap-0.5" aria-label={`Avaliação ${value} de 5`}>
-      {[1, 2, 3, 4, 5].map((star) => (
-        <Star
-          key={star}
-          className={`${className} ${
-            star <= Math.round(value) ? "fill-primary text-primary" : "text-border"
-          }`}
-        />
-      ))}
-    </span>
-  );
-}
 
 function EventRow({ event, sold, status }) {
   return (
@@ -132,15 +114,14 @@ function Perfil() {
     cancelEditing,
     toggleSetting,
   } = useOrganizerProfile();
-  const social = useSocial();
-  const [hoverStar, setHoverStar] = useState(0);
+  // As avaliações do perfil são sempre de utilizadores reais: média e contagem.
+  const { summary } = useReviews(PROFILE_TARGET);
   const next = publishedEvents[0]?.event;
 
   const tabCounts = {
     eventos: organizerEvents.length,
     publicados: publishedEvents.length,
     rascunhos: draftEvents.length,
-    avaliacoes: organizerReviews.length,
   };
 
   return (
@@ -172,7 +153,7 @@ function Perfil() {
       </header>
 
       <main className="px-4">
-        {/* CARTÃO DO PERFIL: foto, verificado, bio, estatísticas sociais. */}
+        {/* CARTÃO DO PERFIL: foto, verificado, bio e estatísticas reais. */}
         <section aria-labelledby="profile-title" className="rounded-3xl bg-card p-4">
           <div className="flex items-start gap-4">
             <div className="relative shrink-0">
@@ -206,69 +187,35 @@ function Perfil() {
 
           <div className="mt-4 grid grid-cols-3 divide-x divide-border text-center">
             <div><p className="text-lg font-extrabold">{organizerEvents.length}</p><p className="text-[10px] text-muted-foreground">Eventos</p></div>
-            <div><p className="text-lg font-extrabold tabular-nums">{social.connections}</p><p className="text-[10px] text-muted-foreground">Conexões</p></div>
+            <div><p className="text-lg font-extrabold tabular-nums">{summary.count}</p><p className="text-[10px] text-muted-foreground">Avaliações</p></div>
             <div>
-              <p className="flex items-center justify-center gap-1 text-lg font-extrabold">{social.rating} <Star className="size-4 fill-primary text-primary" /></p>
-              <p className="text-[10px] text-muted-foreground">Estrelas</p>
+              <p className="flex items-center justify-center gap-1 text-lg font-extrabold tabular-nums">
+                {summary.count
+                  ? summary.average.toLocaleString("pt-PT", { minimumFractionDigits: 1 })
+                  : "—"}{" "}
+                <Star className="size-4 fill-primary text-primary" />
+              </p>
+              <p className="text-[10px] text-muted-foreground">Nota média</p>
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            <button type="button" onClick={social.toggleConnect} aria-pressed={social.connected}
-              className={`flex items-center justify-center gap-2 rounded-full py-2.5 text-xs font-bold transition-all active:scale-95 ${
-                social.connected ? "border border-primary bg-primary/10 text-primary" : "grad-primary glow text-primary-foreground"}`}>
-              {social.connected ? <UserCheck className="size-4" /> : <UserPlus className="size-4" />}
-              {social.connected ? "Conectado" : "Conectar"}
-            </button>
+          <div className="mt-4">
             <button type="button" onClick={startEditing}
-              className="flex items-center justify-center gap-2 rounded-full border border-primary py-2.5 text-xs font-bold text-primary">
+              className="flex w-full items-center justify-center gap-2 rounded-full border border-primary py-2.5 text-xs font-bold text-primary">
               <Pencil className="size-3.5" /> Editar perfil
             </button>
           </div>
-
-          {/* DAR ESTRELAS */}
-          <div className="mt-4 rounded-2xl bg-primary/10 p-3 text-center">
-            <p className="flex items-center justify-center gap-1 text-[11px] font-bold">
-              <Sparkles className="size-3.5 text-primary" /> {social.myStars ? "A sua avaliação" : "Dê estrelas a este organizador"}
-            </p>
-            <div className="mt-2 flex justify-center gap-1" onMouseLeave={() => setHoverStar(0)}>
-              {[1, 2, 3, 4, 5].map((n) => {
-                const lit = n <= (hoverStar || social.myStars);
-                return (
-                  <button key={n} type="button" aria-label={`Dar ${n} estrela${n > 1 ? "s" : ""}`}
-                    onMouseEnter={() => setHoverStar(n)} onClick={() => social.rate(n)}
-                    className={`transition-transform active:scale-75 ${lit ? "scale-110" : ""}`}>
-                    <Star className={`size-7 ${lit ? "fill-primary text-primary" : "text-border"}`} />
-                  </button>
-                );
-              })}
-            </div>
-            <p className="mt-1 text-[10px] text-muted-foreground">
-              {social.myStars ? ["", "Pode melhorar", "Razoável", "Bom", "Muito bom", "Incrível!"][social.myStars] + " · toque de novo para remover" : "Toque numa estrela"}
-            </p>
-          </div>
         </section>
 
-        {/* PESSOAS PARA CONECTAR */}
-        <section className="mt-4">
-          <h2 className="mb-2 flex items-center gap-1 text-sm font-bold"><Users className="size-4 text-primary" /> Pessoas que pode conhecer</h2>
-          <ul className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
-            {suggestedPeople.map((p) => {
-              const on = social.people[p.id];
-              return (
-                <li key={p.id} className="w-32 shrink-0 rounded-2xl bg-card p-3 text-center">
-                  <span className="mx-auto grid size-12 place-items-center rounded-full grad-primary text-sm font-bold text-primary-foreground">{p.initials}</span>
-                  <p className="mt-2 truncate text-xs font-bold">{p.name}</p>
-                  <p className="text-[10px] text-muted-foreground">{p.role} · {p.mutual + (on ? 1 : 0)} em comum</p>
-                  <button type="button" onClick={() => social.togglePerson(p.id)}
-                    className={`mt-2 w-full rounded-full py-1.5 text-[10px] font-bold transition-all active:scale-95 ${on ? "bg-primary/15 text-primary" : "bg-primary text-primary-foreground"}`}>
-                    {on ? "Conectado ✓" : "Conectar"}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
+        {/* AVALIAÇÕES: estrelas e texto — só de utilizadores reais, nunca inventadas. */}
+        <div className="mt-4">
+          <Reviews target={PROFILE_TARGET} title="Avaliações do organizador" />
+        </div>
+
+        {/* COMENTÁRIOS: publicar, responder, editar, apagar e denunciar. */}
+        <div className="mt-4">
+          <Comments target={PROFILE_TARGET} title="Comentários no perfil" />
+        </div>
 
         {next ? (
           <Link to="/evento/$id" params={{ id: next.id }} className="relative mt-4 block overflow-hidden rounded-3xl">
@@ -387,7 +334,7 @@ function Perfil() {
           </section>
         ) : null}
 
-        {/* ABAS: Meus eventos, Publicados, Rascunhos e Avaliações. */}
+        {/* ABAS: Meus eventos, Publicados e Rascunhos. */}
         <nav
           aria-label="Secções do perfil"
           className="no-scrollbar mt-6 flex gap-2 overflow-x-auto pb-1"
@@ -410,53 +357,29 @@ function Perfil() {
         </nav>
 
         <section className="mt-4" aria-live="polite">
-          {activeTab !== "avaliacoes" ? (
-            <>
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-base font-bold">
-                  {tabs.find((tab) => tab.id === activeTab)?.label}
-                </h2>
-                <Link to="/explorar" className="flex items-center gap-1 text-xs text-primary">
-                  Ver todos <ArrowRight className="size-3" />
-                </Link>
-              </div>
-              <ul className="space-y-3">
-                {(activeTab === "eventos"
-                  ? organizerEvents
-                  : activeTab === "publicados"
-                    ? publishedEvents
-                    : draftEvents
-                ).map(({ event, sold, status }) => (
-                  <EventRow key={event.id} event={event} sold={sold} status={status} />
-                ))}
-              </ul>
-              {activeTab === "rascunhos" && draftEvents.length === 0 ? (
-                <p className="rounded-2xl bg-surface-2 p-4 text-center text-xs text-muted-foreground">
-                  Sem rascunhos por agora.
-                </p>
-              ) : null}
-            </>
-          ) : (
-            <ul className="space-y-3">
-              {organizerReviews.map((review) => (
-                <li key={review.id} className="rounded-2xl bg-card p-3">
-                  <div className="flex items-center gap-2">
-                    <span className="grid size-9 place-items-center rounded-full bg-primary/15 text-xs font-bold text-primary">
-                      {review.initials}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold">{review.author}</p>
-                      <p className="text-[10px] text-muted-foreground">{review.date}</p>
-                    </div>
-                    <Stars value={review.rating} className="size-3" />
-                  </div>
-                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-                    {review.text}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-base font-bold">
+              {tabs.find((tab) => tab.id === activeTab)?.label}
+            </h2>
+            <Link to="/explorar" className="flex items-center gap-1 text-xs text-primary">
+              Ver todos <ArrowRight className="size-3" />
+            </Link>
+          </div>
+          <ul className="space-y-3">
+            {(activeTab === "eventos"
+              ? organizerEvents
+              : activeTab === "publicados"
+                ? publishedEvents
+                : draftEvents
+            ).map(({ event, sold, status }) => (
+              <EventRow key={event.id} event={event} sold={sold} status={status} />
+            ))}
+          </ul>
+          {activeTab === "rascunhos" && draftEvents.length === 0 ? (
+            <p className="rounded-2xl bg-surface-2 p-4 text-center text-xs text-muted-foreground">
+              Sem rascunhos por agora.
+            </p>
+          ) : null}
         </section>
 
         <section className="mt-5 rounded-3xl bg-primary/10 p-4">
@@ -492,3 +415,13 @@ function Perfil() {
     </Screen>
   );
 }
+
+function Star({ className = "size-4" }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+      <path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8L12 2z" />
+    </svg>
+  );
+}
+
+export { Stars };
