@@ -25,7 +25,6 @@ import {
   draftEvents,
   organizerEvents,
   publishedEvents,
-  profileStats,
 } from "@/data/profile";
 import { pendingMessageCount } from "@/data/messages";
 import { useOrganizerProfile } from "@/hooks/use-organizer-profile";
