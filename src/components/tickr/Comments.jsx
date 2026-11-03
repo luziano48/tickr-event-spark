@@ -16,8 +16,6 @@ export function Comments({ target, title = "Comentários", placeholder = "Escrev
   const { comments, count, add, edit, remove, report } = useComments(target);
   const [draft, setDraft] = useState("");
   const [replyTo, setReplyTo] = useState(null);
-  const [editingId, setEditingId] = useState(null);
-  const [editText, setEditText] = useState("");
 
   const roots = comments.filter((c) => !c.parentId);
   const repliesOf = (id) => comments.filter((c) => c.parentId === id);
@@ -49,7 +47,7 @@ export function Comments({ target, title = "Comentários", placeholder = "Escrev
                 <CommentBody
                   comment={comment}
                   onReply={() => { setReplyTo(comment.id); setDraft(""); }}
-                  onEdit={() => { setEditingId(comment.id); setEditText(comment.text); }}
+                  onEditSave={(id, text) => edit(id, text)}
                   onDelete={() => { if (window.confirm("Apagar o seu comentário?")) remove(comment.id); }}
                   onReport={() => { if (window.confirm("Denunciar este comentário para a moderação?")) report(comment.id); }}
                 />
@@ -61,7 +59,7 @@ export function Comments({ target, title = "Comentários", placeholder = "Escrev
                       ) : (
                         <li key={reply.id}>
                           <CommentBody comment={reply} compact
-                            onEdit={() => { setEditingId(reply.id); setEditText(reply.text); }}
+                            onEditSave={(id, text) => edit(id, text)}
                             onDelete={() => { if (window.confirm("Apagar o seu comentário?")) remove(reply.id); }}
                             onReport={() => { if (window.confirm("Denunciar este comentário para a moderação?")) report(reply.id); }}
                           />
