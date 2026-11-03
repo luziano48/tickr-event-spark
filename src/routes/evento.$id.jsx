@@ -103,10 +103,20 @@ function EventDetail({ event }) {
         </span>
       </div>
       <main className="relative px-4 pt-5 pb-32">
-        <h1 className="text-2xl leading-tight font-extrabold">{event.title}</h1>
-        {event.organizer ? (
-          <p className="mt-1 text-sm font-semibold text-primary">Publicado por {event.organizer}</p>
-        ) : null}
+        <div className="flex items-start gap-3">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl leading-tight font-extrabold">{event.title}</h1>
+            {event.organizer ? (
+              <p className="mt-1 text-sm font-semibold text-primary">
+                Publicado por {event.organizer}
+              </p>
+            ) : null}
+          </div>
+          <EventStarButton
+            eventId={event.id}
+            className="mt-0.5 h-10 min-w-10 shrink-0 rounded-full bg-primary/10 px-3 text-primary shadow-none hover:bg-primary/15"
+          />
+        </div>
         <div className="mt-4 grid grid-cols-2 gap-2">
           {info.map(({ icon: Icon, label, value }) => (
             <div key={label} className="rounded-2xl bg-card p-3 shadow-sm">
@@ -147,10 +157,6 @@ function EventDetail({ event }) {
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{event.rules}</p>
           </section>
         ) : null}
-        <div className="mt-6 flex items-center justify-between rounded-2xl bg-card px-4 py-3 shadow-sm">
-          <span className="text-xs font-semibold text-muted-foreground">Gostou deste evento?</span>
-          <EventStarButton eventId={event.id} className="h-10 min-w-10 px-3" />
-        </div>
         {event.contactName || event.whatsapp ? (
           <section className="mt-6 flex items-center justify-between rounded-2xl bg-surface-2 p-4">
             <div>
