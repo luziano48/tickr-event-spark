@@ -42,7 +42,7 @@ export const tickrPosts = [
     title: "Organize o seu próximo evento em poucos passos.",
     text: "Da primeira ideia ao ingresso validado, a Tickr acompanha toda a jornada do organizador.",
     action: "Começar agora",
-    href: "/perfil",
+    href: "/criar",
   },
   {
     category: "DIFERENCIAIS",

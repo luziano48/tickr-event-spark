@@ -38,7 +38,7 @@ function Scanner() {
               <Link to="/eventos" aria-label="Gestão do evento">
                 <Settings className="size-5" />
               </Link>
-              <Link to="/perfil" aria-label="Fechar">
+              <Link to="/eventos" aria-label="Fechar">
                 <X className="size-5" />
               </Link>
             </div>

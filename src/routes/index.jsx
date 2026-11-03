@@ -5,7 +5,6 @@ import {
   Calendar,
   MapPin,
   MessageCircle,
-  MessageSquare,
   Search,
   Star,
 } from "lucide-react";
@@ -14,6 +13,8 @@ import { Logo } from "@/components/tickr/Logo";
 import { EventCard } from "@/components/tickr/EventCard";
 import { featuredEvent, secondaryEvents } from "@/data/home";
 import { tickrAnnouncements } from "@/data/tickr-profile";
+import { AccountMenu } from "@/components/tickr/AccountMenu";
+import { useOrganizerProfile } from "@/hooks/use-organizer-profile";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -33,6 +34,7 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 function Home() {
+  const { profile, toggleSetting } = useOrganizerProfile();
   return (
     <Screen>
       <header className="flex items-center justify-between px-4 pt-5 pb-3">
@@ -41,9 +43,7 @@ function Home() {
           <Link to="/explorar" aria-label="Procurar">
             <Search className="size-5" />
           </Link>
-          <Link to="/mensagens" aria-label="Abrir mensagens">
-            <MessageSquare className="size-5" />
-          </Link>
+          <AccountMenu profile={profile} toggleSetting={toggleSetting} />
         </div>
       </header>
 
@@ -109,7 +109,10 @@ function Home() {
               </div>
               <h3 className="mt-3 text-base font-bold leading-snug">{post.title}</h3>
               <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{post.text}</p>
-              <Link to={post.href} className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-primary">
+              <Link
+                to={post.href}
+                className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-primary"
+              >
                 Saber mais <ArrowRight className="size-3" />
               </Link>
             </article>

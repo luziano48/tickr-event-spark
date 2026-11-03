@@ -11,12 +11,16 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CriarRouteImport } from './routes/criar'
+import { Route as DefinicoesRouteImport } from './routes/definicoes'
 import { Route as EventosRouteImport } from './routes/eventos'
 import { Route as ExplorarRouteImport } from './routes/explorar'
 import { Route as IngressosRouteImport } from './routes/ingressos'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as MensagensRouteImport } from './routes/mensagens'
 import { Route as PerfilRouteImport } from './routes/perfil'
+import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as ScannerRouteImport } from './routes/scanner'
+import { Route as TermosRouteImport } from './routes/termos'
 import { Route as TickrRouteImport } from './routes/tickr'
 import { Route as EventoIdRouteImport } from './routes/evento.$id'
 
@@ -28,6 +32,11 @@ const IndexRoute = IndexRouteImport.update({
 const CriarRoute = CriarRouteImport.update({
   id: '/criar',
   path: '/criar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DefinicoesRoute = DefinicoesRouteImport.update({
+  id: '/definicoes',
+  path: '/definicoes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EventosRoute = EventosRouteImport.update({
@@ -45,6 +54,11 @@ const IngressosRoute = IngressosRouteImport.update({
   path: '/ingressos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MensagensRoute = MensagensRouteImport.update({
   id: '/mensagens',
   path: '/mensagens',
@@ -55,9 +69,19 @@ const PerfilRoute = PerfilRouteImport.update({
   path: '/perfil',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivacidadeRoute = PrivacidadeRouteImport.update({
+  id: '/privacidade',
+  path: '/privacidade',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ScannerRoute = ScannerRouteImport.update({
   id: '/scanner',
   path: '/scanner',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermosRoute = TermosRouteImport.update({
+  id: '/termos',
+  path: '/termos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TickrRoute = TickrRouteImport.update({
@@ -74,24 +98,32 @@ const EventoIdRoute = EventoIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/criar': typeof CriarRoute
+  '/definicoes': typeof DefinicoesRoute
   '/eventos': typeof EventosRoute
   '/explorar': typeof ExplorarRoute
   '/ingressos': typeof IngressosRoute
+  '/login': typeof LoginRoute
   '/mensagens': typeof MensagensRoute
   '/perfil': typeof PerfilRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/scanner': typeof ScannerRoute
+  '/termos': typeof TermosRoute
   '/tickr': typeof TickrRoute
   '/evento/$id': typeof EventoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/criar': typeof CriarRoute
+  '/definicoes': typeof DefinicoesRoute
   '/eventos': typeof EventosRoute
   '/explorar': typeof ExplorarRoute
   '/ingressos': typeof IngressosRoute
+  '/login': typeof LoginRoute
   '/mensagens': typeof MensagensRoute
   '/perfil': typeof PerfilRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/scanner': typeof ScannerRoute
+  '/termos': typeof TermosRoute
   '/tickr': typeof TickrRoute
   '/evento/$id': typeof EventoIdRoute
 }
@@ -99,12 +131,16 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/criar': typeof CriarRoute
+  '/definicoes': typeof DefinicoesRoute
   '/eventos': typeof EventosRoute
   '/explorar': typeof ExplorarRoute
   '/ingressos': typeof IngressosRoute
+  '/login': typeof LoginRoute
   '/mensagens': typeof MensagensRoute
   '/perfil': typeof PerfilRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/scanner': typeof ScannerRoute
+  '/termos': typeof TermosRoute
   '/tickr': typeof TickrRoute
   '/evento/$id': typeof EventoIdRoute
 }
@@ -113,36 +149,48 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/criar'
+    | '/definicoes'
     | '/eventos'
     | '/explorar'
     | '/ingressos'
+    | '/login'
     | '/mensagens'
     | '/perfil'
+    | '/privacidade'
     | '/scanner'
+    | '/termos'
     | '/tickr'
     | '/evento/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/criar'
+    | '/definicoes'
     | '/eventos'
     | '/explorar'
     | '/ingressos'
+    | '/login'
     | '/mensagens'
     | '/perfil'
+    | '/privacidade'
     | '/scanner'
+    | '/termos'
     | '/tickr'
     | '/evento/$id'
   id:
     | '__root__'
     | '/'
     | '/criar'
+    | '/definicoes'
     | '/eventos'
     | '/explorar'
     | '/ingressos'
+    | '/login'
     | '/mensagens'
     | '/perfil'
+    | '/privacidade'
     | '/scanner'
+    | '/termos'
     | '/tickr'
     | '/evento/$id'
   fileRoutesById: FileRoutesById
@@ -150,12 +198,16 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CriarRoute: typeof CriarRoute
+  DefinicoesRoute: typeof DefinicoesRoute
   EventosRoute: typeof EventosRoute
   ExplorarRoute: typeof ExplorarRoute
   IngressosRoute: typeof IngressosRoute
+  LoginRoute: typeof LoginRoute
   MensagensRoute: typeof MensagensRoute
   PerfilRoute: typeof PerfilRoute
+  PrivacidadeRoute: typeof PrivacidadeRoute
   ScannerRoute: typeof ScannerRoute
+  TermosRoute: typeof TermosRoute
   TickrRoute: typeof TickrRoute
   EventoIdRoute: typeof EventoIdRoute
 }
@@ -174,6 +226,13 @@ declare module '@tanstack/react-router' {
       path: '/criar'
       fullPath: '/criar'
       preLoaderRoute: typeof CriarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/definicoes': {
+      id: '/definicoes'
+      path: '/definicoes'
+      fullPath: '/definicoes'
+      preLoaderRoute: typeof DefinicoesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/eventos': {
@@ -197,6 +256,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IngressosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/mensagens': {
       id: '/mensagens'
       path: '/mensagens'
@@ -211,11 +277,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PerfilRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/privacidade': {
+      id: '/privacidade'
+      path: '/privacidade'
+      fullPath: '/privacidade'
+      preLoaderRoute: typeof PrivacidadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/scanner': {
       id: '/scanner'
       path: '/scanner'
       fullPath: '/scanner'
       preLoaderRoute: typeof ScannerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/termos': {
+      id: '/termos'
+      path: '/termos'
+      fullPath: '/termos'
+      preLoaderRoute: typeof TermosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tickr': {
@@ -238,12 +318,16 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CriarRoute: CriarRoute,
+  DefinicoesRoute: DefinicoesRoute,
   EventosRoute: EventosRoute,
   ExplorarRoute: ExplorarRoute,
   IngressosRoute: IngressosRoute,
+  LoginRoute: LoginRoute,
   MensagensRoute: MensagensRoute,
   PerfilRoute: PerfilRoute,
+  PrivacidadeRoute: PrivacidadeRoute,
   ScannerRoute: ScannerRoute,
+  TermosRoute: TermosRoute,
   TickrRoute: TickrRoute,
   EventoIdRoute: EventoIdRoute,
 }

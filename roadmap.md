@@ -4,9 +4,9 @@
 - [ ] Simplificar Eventos com seleção clara, resumo e abas de gestão.
 - [ ] Verificar as ações e a apresentação de Eventos no navegador.
 
-- [ ] Organizar Explorar em eventos, conexões e fornecedores com pesquisa funcional.
+- [ ] Organizar Explorar em eventos e fornecedores com pesquisa funcional.
 - [ ] Separar o perfil oficial e os anúncios Tickr dos eventos e melhorar a apresentação.
-- [ ] Verificar pesquisa, conexões, fornecedores e acesso ao perfil oficial.
+- [ ] Verificar pesquisa, fornecedores e acesso ao perfil oficial.
 
 - [x] Aplicar à página Mensagens o visual da referência enviada.
 - [x] Tornar as ações de aprovar, aceitar, recusar, ligar e WhatsApp funcionais.

@@ -8,6 +8,12 @@ const defaults = {
   username: organizerProfile.username,
   location: organizerProfile.location,
   photo: organizerProfile.photo,
+  bio: "Eventos, música e cultura em Luanda. Acompanhe as novidades e descubra as próximas experiências.",
+  email: "",
+  instagram: "",
+  linkedin: "",
+  website: "",
+  whatsapp: "",
   notifications: true,
   publicProfile: true,
 };
@@ -31,8 +37,17 @@ export function useOrganizerProfile() {
   useEffect(() => {
     const stored = readStored();
     if (stored) {
-      setProfile(stored);
-      setDraft(stored);
+      const migrated =
+        stored.name === "Luziano Domingos"
+          ? { ...stored, name: defaults.name, username: defaults.username }
+          : stored;
+      setProfile(migrated);
+      setDraft(migrated);
+      if (migrated !== stored) {
+        try {
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+        } catch {}
+      }
     }
   }, []);
 
@@ -45,10 +60,10 @@ export function useOrganizerProfile() {
     }
   };
 
-  const changePhoto = (file) => {
+  const changeDraftPhoto = (file) => {
     if (!file || !file.type.startsWith("image/")) return;
     const reader = new FileReader();
-    reader.onload = () => persist({ ...profile, photo: String(reader.result) });
+    reader.onload = () => setDraft((current) => ({ ...current, photo: String(reader.result) }));
     reader.readAsDataURL(file);
   };
 
@@ -65,6 +80,13 @@ export function useOrganizerProfile() {
         ? draft.username.trim()
         : `@${draft.username.trim()}`,
       location: draft.location.trim() || profile.location,
+      photo: draft.photo || profile.photo,
+      bio: draft.bio.trim(),
+      email: draft.email.trim(),
+      instagram: draft.instagram.trim(),
+      linkedin: draft.linkedin.trim(),
+      website: draft.website.trim(),
+      whatsapp: draft.whatsapp.trim(),
     };
     persist(cleaned);
     setEditing(false);
@@ -82,7 +104,7 @@ export function useOrganizerProfile() {
     editing,
     draft,
     setDraft,
-    changePhoto,
+    changeDraftPhoto,
     startEditing,
     saveProfile,
     cancelEditing,
