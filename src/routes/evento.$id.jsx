@@ -19,7 +19,7 @@ import {
 import { Screen } from "@/components/tickr/Screen";
 import { getEvent } from "@/data/events";
 import { loadCreatedEvents } from "@/data/created-events";
-import { ContentFeedback } from "@/components/tickr/ContentFeedback";
+import { EventStarButton } from "@/components/tickr/EventStarButton";
 import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/evento/$id")({
@@ -147,7 +147,10 @@ function EventDetail({ event }) {
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{event.rules}</p>
           </section>
         ) : null}
-        <ContentFeedback contentId={event.id} contentType="event" allowComments={false} />
+        <div className="mt-6 flex items-center justify-between rounded-2xl bg-card px-4 py-3 shadow-sm">
+          <span className="text-xs font-semibold text-muted-foreground">Gostou deste evento?</span>
+          <EventStarButton eventId={event.id} className="h-10 min-w-10 px-3" />
+        </div>
         {event.contactName || event.whatsapp ? (
           <section className="mt-6 flex items-center justify-between rounded-2xl bg-surface-2 p-4">
             <div>
