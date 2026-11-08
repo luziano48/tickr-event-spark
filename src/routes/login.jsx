@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { CalendarDays, BriefcaseBusiness } from "lucide-react";
 import { authApi } from "@/lib/api/auth";
@@ -24,6 +24,33 @@ function Auth() {
     [busy, setBusy] = useState(false);
   const navigate = useNavigate();
   const [selectedRole, setSelectedRole] = useState("organizer");
+  useEffect(() => {
+    const search = new URLSearchParams(window.location.search);
+    const code = search.get("code");
+    if (!code) return;
+
+    let active = true;
+    authApi
+      .exchangeCode(code)
+      .then(() => {
+        if (!active) return;
+        window.history.replaceState({}, "", window.location.pathname);
+        if (search.get("flow") === "recovery") {
+          setMode("update");
+          setNote("Define uma nova palavra-passe para a tua conta.");
+        } else {
+          navigate({ to: "/" });
+        }
+      })
+      .catch((err) => {
+        if (active) setError(err.message || "Não foi possível validar o link.");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [navigate]);
+
   async function submit(e) {
     e.preventDefault();
     setError("");
@@ -31,12 +58,16 @@ function Auth() {
     const f = new FormData(e.currentTarget);
     const email = String(f.get("email") || "").trim();
     const password = String(f.get("password") || "");
-    if (!/^\S+@\S+\.\S+$/.test(email)) {
+    if (mode !== "update" && !/^\S+@\S+\.\S+$/.test(email)) {
       setError("Introduz um email válido.");
       return;
     }
     if (mode !== "recover" && !password) {
       setError("Introduz a tua palavra-passe.");
+      return;
+    }
+    if (mode === "update" && password.length < 8) {
+      setError("A palavra-passe deve ter pelo menos 8 caracteres.");
       return;
     }
     setBusy(true);
@@ -47,11 +78,23 @@ function Auth() {
         if (!name) throw Error("Introduz o teu nome.");
         if (password.length < 8) throw Error("A palavra-passe deve ter pelo menos 8 caracteres.");
         if (password !== f.get("confirm")) throw Error("As palavras-passe não correspondem.");
-        await authApi.signUp({ name, email, password, businessProfile: selectedRole });
-      } else {
+        const result = await authApi.signUp({
+          name,
+          email,
+          password,
+          businessProfile: selectedRole,
+        });
+        if (result.needsEmailConfirmation) {
+          setNote("Confirma o teu email para concluir a criação da conta.");
+          return;
+        }
+      } else if (mode === "recover") {
         const result = await authApi.recoverPassword(email);
         setNote(result?.message || "Se a conta existir, receberás instruções de recuperação.");
         return;
+      } else {
+        if (password !== f.get("confirm")) throw Error("As palavras-passe não correspondem.");
+        await authApi.updatePassword(password);
       }
       navigate({ to: "/" });
     } catch (err) {
@@ -77,63 +120,71 @@ function Auth() {
         </p>
       </section>
       <section className="mx-auto mt-10 w-full max-w-lg rounded-3xl border border-white/10 bg-[#171717] p-5 sm:mt-0 sm:p-7">
-        <h2 className="text-xl font-bold">Escolhe o teu perfil</h2>
-        <div className="mt-4 grid gap-3">
-          {roles.map(({ id, title, text, Icon }) => (
-            <button
-              type="button"
-              key={id}
-              onClick={() => setSelectedRole(id)}
-              aria-pressed={selectedRole === id}
-              className={`relative rounded-2xl border p-4 text-left transition-colors focus-visible:outline-2 focus-visible:outline-[#75efbd] ${selectedRole === id ? "border-[#75efbd] bg-[#75efbd]/10" : "border-white/15 hover:border-white/40"}`}
-            >
-              <span className="flex items-center gap-2 font-bold">
-                <Icon className="size-5 text-[#75efbd]" />
-                {title}
-              </span>
-              <span className="mt-3 block border-t border-dashed border-white/25 pt-3 text-xs leading-5 text-white/70">
-                {text}
-              </span>
-              {selectedRole === id && (
-                <span className="absolute right-3 top-4 text-xs text-[#75efbd]">
-                  ✓ Seleccionado
+        <h2 className="text-xl font-bold">
+          {mode === "update" ? "Nova palavra-passe" : "Escolhe o teu perfil"}
+        </h2>
+        {mode !== "update" && (
+          <div className="mt-4 grid gap-3">
+            {roles.map(({ id, title, text, Icon }) => (
+              <button
+                type="button"
+                key={id}
+                onClick={() => setSelectedRole(id)}
+                aria-pressed={selectedRole === id}
+                className={`relative rounded-2xl border p-4 text-left transition-colors focus-visible:outline-2 focus-visible:outline-[#75efbd] ${selectedRole === id ? "border-[#75efbd] bg-[#75efbd]/10" : "border-white/15 hover:border-white/40"}`}
+              >
+                <span className="flex items-center gap-2 font-bold">
+                  <Icon className="size-5 text-[#75efbd]" />
+                  {title}
                 </span>
-              )}
+                <span className="mt-3 block border-t border-dashed border-white/25 pt-3 text-xs leading-5 text-white/70">
+                  {text}
+                </span>
+                {selectedRole === id && (
+                  <span className="absolute right-3 top-4 text-xs text-[#75efbd]">
+                    ✓ Seleccionado
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+        {mode !== "update" && (
+          <div className="mt-5 flex gap-4 text-sm">
+            <button
+              onClick={() => setMode("login")}
+              className={mode === "login" ? "text-[#75efbd]" : "text-white/60"}
+            >
+              Entrar
             </button>
-          ))}
-        </div>
-        <div className="mt-5 flex gap-4 text-sm">
-          <button
-            onClick={() => setMode("login")}
-            className={mode === "login" ? "text-[#75efbd]" : "text-white/60"}
-          >
-            Entrar
-          </button>
-          <button
-            onClick={() => setMode("register")}
-            className={mode === "register" ? "text-[#75efbd]" : "text-white/60"}
-          >
-            Criar conta
-          </button>
-          <button
-            onClick={() => setMode("recover")}
-            className={mode === "recover" ? "text-[#75efbd]" : "text-white/60"}
-          >
-            Recuperar
-          </button>
-        </div>
+            <button
+              onClick={() => setMode("register")}
+              className={mode === "register" ? "text-[#75efbd]" : "text-white/60"}
+            >
+              Criar conta
+            </button>
+            <button
+              onClick={() => setMode("recover")}
+              className={mode === "recover" ? "text-[#75efbd]" : "text-white/60"}
+            >
+              Recuperar
+            </button>
+          </div>
+        )}
         <form onSubmit={submit} className="mt-4 space-y-3">
           {mode === "register" && (
             <input name="name" placeholder="Nome" autoComplete="name" className="auth-input" />
           )}
-          <input
-            name="email"
-            type="email"
-            placeholder="Email"
-            autoComplete="email"
-            className="auth-input"
-            required
-          />
+          {mode !== "update" && (
+            <input
+              name="email"
+              type="email"
+              placeholder="Email"
+              autoComplete="email"
+              className="auth-input"
+              required
+            />
+          )}
           {mode !== "recover" && (
             <>
               <input
@@ -153,6 +204,16 @@ function Auth() {
                   required
                 />
               )}
+              {mode === "update" && (
+                <input
+                  name="confirm"
+                  type="password"
+                  placeholder="Confirmar nova palavra-passe"
+                  autoComplete="new-password"
+                  className="auth-input"
+                  required
+                />
+              )}
             </>
           )}
           <button
@@ -165,7 +226,9 @@ function Auth() {
                 ? "Entrar"
                 : mode === "register"
                   ? "Criar conta"
-                  : "Enviar pedido"}
+                  : mode === "update"
+                    ? "Actualizar palavra-passe"
+                    : "Enviar pedido"}
           </button>
           {error && (
             <p role="alert" className="text-sm text-red-300">
@@ -179,7 +242,7 @@ function Auth() {
           )}
         </form>
         <p className="mt-4 text-[11px] text-white/45">
-          A autenticação e recuperação dependem do backend, ainda não ligado.
+          A autenticação e recuperação são geridas pelo Supabase.
         </p>
       </section>
       <style>{`.auth-input{width:100%;border-radius:.75rem;border:1px solid #ffffff30;background:#101010;padding:.8rem .9rem;color:white;outline:none}.auth-input:focus{border-color:#75efbd;box-shadow:0 0 0 2px #75efbd55} @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}`}</style>

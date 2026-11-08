@@ -4,31 +4,33 @@
 
 O React apresenta interface, formulários, navegação e estados de carregamento/erro/sucesso. Valida campos para dar feedback imediato, mostra dados recebidos e esconde opções que não se aplicam ao perfil. Estas validações e ocultações não concedem segurança nem autorização.
 
-Todas as chamadas passam por `src/lib/api/`. A base é `/api`, configurável com `VITE_API_URL`. O cliente inclui credenciais de sessão e não guarda passwords nem tokens em `localStorage`.
+As chamadas de autenticação passam por funções de servidor em `src/lib/api/auth.js`; o Supabase Auth é acedido exclusivamente no servidor com `@supabase/ssr`. A sessão é mantida em cookies `HttpOnly`, `SameSite=Lax` e `Secure` em HTTPS. O URL e a chave pública Supabase são configurados com `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`; estas variáveis são públicas e nunca devem conter `service_role`.
+
+Os restantes pedidos passam pelo cliente HTTP em `src/lib/api/`, com base `/api` configurável por `VITE_API_URL`.
 
 ## Backend — Supabase e lógica de servidor
 
-O backend autentica e gere sessões, autoriza o acesso, valida definitivamente regras de negócio e dados, mantém integridade de eventos/pedidos/bilhetes, executa operações atómicas, evita duplicações, gera e valida códigos seguros e regista auditoria para operações privilegiadas. Segredos administrativos e `service_role` ficam exclusivamente no servidor.
+O Supabase Auth já suporta início de sessão, criação de conta, confirmação de email, recuperação e actualização de palavra-passe, e terminação de sessão. O servidor valida os dados de entrada e gere os cookies de sessão. Configura no painel Supabase os URLs de redirecionamento de email para o domínio local e para os domínios de produção.
 
-## Contratos a implementar
+O schema da Fase 1 está definido em `supabase/migrations/20261108160000_phase1_foundation.sql`: perfis, papéis, preferências, eventos, equipa, tipos de ingresso, encomendas, bilhetes, comentários, denúncias, avaliações, estrelas, pedidos de patrocínio e auditoria. As tabelas usam RLS e funções privilegiadas para gestão de papéis, revisão, moderação, check-in e submissão de eventos. Segredos administrativos e `service_role` ficam exclusivamente no servidor.
 
-| Método  | Endpoint                  | Pedido                                       | Resposta esperada                                                                  |
-| ------- | ------------------------- | -------------------------------------------- | ---------------------------------------------------------------------------------- |
-| GET     | `/auth/session`           | —                                            | `{ user: { id, name, email, avatar, businessProfile, role } }` ou `{ user: null }` |
-| POST    | `/auth/login`             | `{ email, password }`                        | `{ user }` e cookie seguro                                                         |
-| POST    | `/auth/register`          | `{ name, email, password, businessProfile }` | `{ user }` e cookie seguro; validar perfil e unicidade no servidor                 |
-| POST    | `/auth/logout`            | —                                            | `{ ok: true }` e invalidar sessão no servidor                                      |
-| POST    | `/auth/password/recovery` | `{ email }`                                  | resposta genérica que não revela se a conta existe                                 |
-| PUT     | `/auth/password`          | `{ password }`                               | `{ ok: true }`, após verificar sessão/recovery token                               |
-| GET/PUT | `/account/preferences`    | preferências suportadas                      | preferências do utilizador autenticado                                             |
+## Estado dos contratos
 
-Os endpoints ainda não existem neste repositório. O frontend recebe uma mensagem explícita de serviço indisponível (501) até serem implementados. Não há autenticação simulada nem envio de recuperação fingido.
+| Operação | Estado | Comportamento |
+| --- | --- | --- |
+| Sessão / entrar / sair | Ligado | Supabase Auth no servidor e cookies de sessão protegidos |
+| Registo | Ligado | Trigger cria perfil, preferências e papéis iniciais a partir de metadata validada |
+| Recuperação / palavra-passe | Ligado | Email de recuperação com troca do código no servidor e actualização autenticada |
+| Perfil / papéis | Ligado | Consulta e actualização de perfil; gestão de papéis apenas por RPC administrativa |
+| Schema / RLS | Migration preparada | Aplicação manual no SQL Editor; promove o primeiro administrador através do procedimento documentado |
+| Preferências da conta | Pendente | Endpoint `/api/account/preferences` ainda não implementado |
+
+As funções de autenticação são funções de servidor TanStack Start, não endpoints REST públicos. Os restantes endpoints que ainda não existem respondem como serviço indisponível; não há autenticação simulada nem envio de recuperação fingido.
 
 ## Pendências de backend
 
-- Ligar Supabase Auth ou serviço equivalente e configurar cookies/sessões seguros.
-- Definir RLS/policies, papéis de acesso e permissões por recurso no servidor.
-- Persistir `businessProfile` como atributo próprio da conta, separado de `role`.
+- Aplicar a migration da Fase 1 no projecto Supabase e promover o primeiro administrador.
+- Configurar URLs de redireccionamento de email no projecto Supabase para desenvolvimento e produção.
 - Implementar contratos acima, recuperação real, auditoria e rate limiting.
 - Implementar endpoints e transacções para eventos, pedidos, bilhetes, QR e prevenção de duplicados.
 - Confirmar quais preferências de notificação são suportadas e respectivos canais.
@@ -36,7 +38,7 @@ Os endpoints ainda não existem neste repositório. O frontend recebe uma mensag
 
 ## Comentários, avaliações e retirada segura de conexões
 
-Não existe schema, diretório de migrations, projeto Supabase nem código de backend neste repositório. Portanto, nenhuma tabela ou relacionamento de produção foi alterado. Antes de preparar uma migration executável, exportar e rever o schema remoto, políticas RLS, views, triggers, funções, jobs, integrações e contagens de dados; preservar uma cópia de segurança e manter os dados antigos arquivados até confirmar que nenhum cliente os consulta.
+A migration de fundação cria as tabelas `tickr_*`, mas ainda não foi aplicada ao projecto remoto e não integra os ecrãs existentes de comentários/avaliações. Nenhuma tabela ou relacionamento remoto foi alterado. Antes de executar a migration num projecto com dados, exportar e rever o schema remoto, políticas RLS, views, triggers, funções, jobs, integrações e contagens de dados; preservar uma cópia de segurança e manter os dados antigos arquivados até confirmar que nenhum cliente os consulta.
 
 ### Contratos de conteúdo
 
@@ -50,7 +52,7 @@ Não existe schema, diretório de migrations, projeto Supabase nem código de ba
 - O backend valida elegibilidade por ingresso válido ou presença confirmada quando os dados de check-in estiverem ligados. A interface não concede elegibilidade.
 - Moderação, denúncias, rate limiting e autoria são validados exclusivamente no servidor e cobertos por RLS/policies e auditoria.
 
-O modelo de dados proposto usa comentários polimórficos com `content_type`, `content_id`, `author_id`, `parent_id`, `body`, timestamps e estado de moderação; avaliações de eventos ficam numa tabela separada com `event_id`, `user_id`, `rating` e `body`. Denúncias guardam denunciante, alvo, motivo, estado e decisão moderada. Definir índices/foreign keys apenas após confirmar os IDs e tipos reais das tabelas de conteúdo.
+O schema inicial usa comentários polimórficos com `content_type`, `content_id`, `author_id`, `parent_id`, `body`, timestamps e estado de moderação; avaliações ficam numa tabela separada com tipo de alvo, ID, autor, `rating` e `body`. Denúncias guardam denunciante, alvo, motivo, estado e decisão moderada. A ligação às tabelas existentes da aplicação continua pendente até concluir inventário e aprovar migração de dados.
 
 ### Migração de conexões
 
