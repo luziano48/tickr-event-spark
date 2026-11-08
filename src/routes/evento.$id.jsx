@@ -20,6 +20,7 @@ import { Screen } from "@/components/tickr/Screen";
 import { getEvent } from "@/data/events";
 import { loadCreatedEvents } from "@/data/created-events";
 import { EventStarButton } from "@/components/tickr/EventStarButton";
+import { ticketRequestsApi } from "@/lib/api/ticket-requests";
 import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/evento/$id")({
@@ -179,18 +180,24 @@ function EventDetail({ event }) {
         ) : null}
       </main>
       <div className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-md border-t border-border bg-card/95 p-4 backdrop-blur">
-        <div className="flex items-center gap-3">
-          <div>
-            <p className="text-[10px] text-muted-foreground">A partir de</p>
-            <p className="text-lg font-extrabold text-primary">{event.price}</p>
+        {event.status && event.status !== "published" ? (
+          <p className="text-center text-sm font-semibold text-muted-foreground">
+            Este evento ainda está em revisão.
+          </p>
+        ) : (
+          <div className="flex items-center gap-3">
+            <div>
+              <p className="text-[10px] text-muted-foreground">A partir de</p>
+              <p className="text-lg font-extrabold text-primary">{event.price}</p>
+            </div>
+            <button
+              onClick={() => setBuying(true)}
+              className="grad-primary glow flex flex-1 items-center justify-center gap-2 rounded-full py-3 text-sm font-bold text-primary-foreground"
+            >
+              Pedir ingresso <ArrowRight className="size-4" />
+            </button>
           </div>
-          <button
-            onClick={() => setBuying(true)}
-            className="grad-primary glow flex flex-1 items-center justify-center gap-2 rounded-full py-3 text-sm font-bold text-primary-foreground"
-          >
-            Comprar ingresso <ArrowRight className="size-4" />
-          </button>
-        </div>
+        )}
       </div>
       {buying ? (
         <PurchaseSheet event={event} tickets={tickets} onClose={() => setBuying(false)} />
@@ -207,7 +214,6 @@ function PurchaseSheet({ event, tickets, onClose }) {
     name: "",
     email: "",
     whatsapp: "",
-    age: "",
     ticket: tickets[0].name,
     qty: 1,
   });
@@ -215,22 +221,31 @@ function PurchaseSheet({ event, tickets, onClose }) {
   const [status, setStatus] = useState("idle");
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const selected = tickets.find((t) => t.name === form.ticket) || tickets[0];
-  const total = (Number(selected.price) || 0) * form.qty;
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     if (status !== "idle") return;
     const er = {};
     if (form.name.trim().length < 3) er.name = "Indique o nome completo";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) er.email = "E-mail inválido";
     if (form.whatsapp.replace(/\D/g, "").length < 9) er.whatsapp = "Número de WhatsApp inválido";
-    const age = Number(form.age);
-    if (!age || age < 1 || age > 120) er.age = "Idade inválida";
-    else if (/18/.test(event.age || "") && age < 18) er.age = "Evento para maiores de 18";
     setErrors(er);
     if (Object.keys(er).length) return;
     setStatus("sending");
-    setTimeout(() => setStatus("done"), 1400);
+    try {
+      await ticketRequestsApi.submit({
+        eventIdentifier: event.slug || event.id,
+        name: form.name,
+        email: form.email,
+        phone: form.whatsapp,
+        ticketName: selected.name,
+        quantity: form.qty,
+      });
+      setStatus("done");
+    } catch (error) {
+      setErrors({ submit: error.message || "Não foi possível enviar o pedido." });
+      setStatus("idle");
+    }
   };
 
   return (
@@ -244,7 +259,7 @@ function PurchaseSheet({ event, tickets, onClose }) {
       >
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <p className="text-[10px] font-bold tracking-wider text-primary">COMPRAR INGRESSO</p>
+            <p className="text-[10px] font-bold tracking-wider text-primary">PEDIR INGRESSO</p>
             <h2 className="text-lg font-extrabold leading-tight">{event.title}</h2>
           </div>
           <button
@@ -260,16 +275,18 @@ function PurchaseSheet({ event, tickets, onClose }) {
             <span className="mx-auto grid size-14 place-items-center rounded-full bg-success-soft text-primary">
               <Check className="size-7" />
             </span>
-            <h3 className="mt-4 text-lg font-extrabold">Compra confirmada!</h3>
+            <h3 className="mt-4 text-lg font-extrabold">Pedido enviado</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Enviámos o ingresso {selected.name} para {form.email}.
+              O organizador recebeu o teu pedido de {form.qty} ingresso(s) {selected.name} e vai
+              contactar-te. Isto ainda não é uma compra nem confirma um ingresso.
             </p>
-            <Link
-              to="/ingressos"
+            <button
+              type="button"
+              onClick={onClose}
               className="grad-primary glow mt-5 flex w-full items-center justify-center rounded-full py-3 text-sm font-bold text-primary-foreground"
             >
-              Ver os meus ingressos
-            </Link>
+              Fechar
+            </button>
           </div>
         ) : (
           <form onSubmit={submit} className="space-y-3" noValidate>
@@ -294,32 +311,16 @@ function PurchaseSheet({ event, tickets, onClose }) {
                 autoComplete="email"
               />
             </Input>
-            <div className="grid grid-cols-3 gap-2">
-              <div className="col-span-2">
-                <Input label="WhatsApp" error={errors.whatsapp}>
-                  <input
-                    className={inputCls}
-                    type="tel"
-                    maxLength={20}
-                    value={form.whatsapp}
-                    onChange={set("whatsapp")}
-                    placeholder="+244 9xx xxx xxx"
-                  />
-                </Input>
-              </div>
-              <Input label="Idade" error={errors.age}>
-                <input
-                  className={inputCls}
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  max={120}
-                  value={form.age}
-                  onChange={set("age")}
-                  placeholder="25"
-                />
-              </Input>
-            </div>
+            <Input label="WhatsApp" error={errors.whatsapp}>
+              <input
+                className={inputCls}
+                type="tel"
+                maxLength={40}
+                value={form.whatsapp}
+                onChange={set("whatsapp")}
+                placeholder="+244 9xx xxx xxx"
+              />
+            </Input>
             <div>
               <span className="text-xs font-semibold">Tipo de ingresso</span>
               <div className="mt-1 space-y-2">
@@ -356,6 +357,15 @@ function PurchaseSheet({ event, tickets, onClose }) {
                 </button>
               </div>
             </div>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              O envio é gratuito e não exige conta. Não há pagamento nem reserva de lugares; este
+              pedido será partilhado com o organizador para que possa contactar-te.
+            </p>
+            {errors.submit ? (
+              <p role="alert" className="text-xs text-destructive">
+                {errors.submit}
+              </p>
+            ) : null}
             <button
               type="submit"
               disabled={status === "sending"}
@@ -366,7 +376,7 @@ function PurchaseSheet({ event, tickets, onClose }) {
                   <Loader2 className="size-4 animate-spin" /> A processar…
                 </>
               ) : (
-                `Pagar ${fmtPrice(total)}`
+                "Enviar pedido ao organizador"
               )}
             </button>
           </form>

@@ -64,6 +64,7 @@ function CriarEvento() {
     updateTicket,
     removeTicket,
     errors,
+    submitError,
     status,
     step,
     stepIndex,
@@ -115,7 +116,6 @@ function CriarEvento() {
             type="button"
             onClick={reset}
             className="mt-3 w-full rounded-full border border-primary/40 py-3 text-sm font-semibold text-primary"
-           
           >
             Criar outro evento
           </button>
@@ -223,7 +223,7 @@ function CriarEvento() {
                   <input
                     ref={fileInput}
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp"
                     className="hidden"
                     onChange={(e) => selectImage(e.target.files?.[0])}
                   />
@@ -253,7 +253,9 @@ function CriarEvento() {
                           maxLength={30}
                           autoFocus
                           value={customCategory}
-                          onChange={(e) => setCustomCategory(e.target.value.toLocaleUpperCase("pt-PT"))}
+                          onChange={(e) =>
+                            setCustomCategory(e.target.value.toLocaleUpperCase("pt-PT"))
+                          }
                           onKeyDown={(e) => {
                             if (e.key === "Enter") {
                               e.preventDefault();
@@ -539,6 +541,12 @@ function CriarEvento() {
             ) : null}
           </div>
 
+          {submitError ? (
+            <p role="alert" className="mt-3 text-sm text-destructive">
+              {submitError}
+            </p>
+          ) : null}
+
           <div className="mt-6 flex items-center gap-3">
             {stepIndex > 0 ? (
               <button
@@ -591,7 +599,9 @@ function CriarEvento() {
             <button
               type="button"
               aria-label="Pesquisar fornecedores"
-              onClick={() => document.getElementById("suppliers-title")?.scrollIntoView({ behavior: "smooth" })}
+              onClick={() =>
+                document.getElementById("suppliers-title")?.scrollIntoView({ behavior: "smooth" })
+              }
               className="grid size-9 place-items-center rounded-full bg-surface-2"
             >
               <Search className="size-4" />

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { saveCreatedEvent } from "@/data/created-events";
+import { eventsApi } from "@/lib/api/events";
 
 export const eventFormCategories = ["MÚSICA", "CULTURA", "FESTIVAL", "NEGÓCIOS", "DESPORTO"];
 
@@ -55,6 +56,7 @@ function validateStep(stepId, form) {
   }
   if (stepId === "ingressos") {
     if (form.tickets.length === 0) errors.tickets = "Crie pelo menos um tipo de ingresso.";
+    else if (form.tickets.length > 20) errors.tickets = "Crie no máximo 20 tipos de ingresso.";
     form.tickets.forEach((ticket, index) => {
       if (!ticket.name.trim()) errors[`ticket-${index}-name`] = "Nome obrigatório.";
       if (ticket.price === "" || Number(ticket.price) < 0)
@@ -76,6 +78,7 @@ export function useCreateEvent() {
   const [form, setForm] = useState(initialForm);
   const [stepIndex, setStepIndex] = useState(0);
   const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState("");
   const [status, setStatus] = useState("idle");
   const [createdEvent, setCreatedEvent] = useState(null);
   const [imageData, setImageData] = useState("");
@@ -89,6 +92,15 @@ export function useCreateEvent() {
 
   const selectImage = (file) => {
     if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setSubmitError("A imagem deve estar em formato JPG, PNG ou WebP.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setSubmitError("A imagem não pode exceder 5 MB.");
+      return;
+    }
+    setSubmitError("");
     setForm((current) => ({
       ...current,
       imageUrl: URL.createObjectURL(file),
@@ -135,6 +147,7 @@ export function useCreateEvent() {
 
   const submit = async () => {
     if (status === "sending") return;
+    setSubmitError("");
     const allErrors = createSteps.reduce(
       (acc, current) => ({ ...acc, ...validateStep(current.id, form) }),
       {},
@@ -145,14 +158,23 @@ export function useCreateEvent() {
       return;
     }
     setStatus("sending");
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-    setCreatedEvent(saveCreatedEvent(form, imageData));
-    setStatus("done");
+    try {
+      const storedEvent = await eventsApi.create({
+        ...form,
+        imageData,
+      });
+      setCreatedEvent(saveCreatedEvent(form, storedEvent));
+      setStatus("done");
+    } catch (error) {
+      setSubmitError(error.message || "Não foi possível guardar o evento.");
+      setStatus("idle");
+    }
   };
 
   const reset = () => {
     setForm({ ...initialForm, tickets: [emptyTicket()] });
     setErrors({});
+    setSubmitError("");
     setStepIndex(0);
     setStatus("idle");
     setCreatedEvent(null);
@@ -172,6 +194,7 @@ export function useCreateEvent() {
     updateTicket,
     removeTicket,
     errors,
+    submitError,
     status,
     step,
     stepIndex,

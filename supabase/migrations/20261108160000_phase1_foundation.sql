@@ -634,8 +634,19 @@ set search_path = ''
 as $$
 begin
   if tg_op = 'INSERT' then
-    if new.status <> 'draft' and not public.tickr_has_role('admin') then
-      raise exception 'Um evento novo tem de começar como rascunho.';
+    if new.status not in ('draft', 'pending_review')
+      and not public.tickr_has_role('admin')
+      and session_user not in ('postgres', 'supabase_admin') then
+      raise exception 'Um evento novo tem de começar como rascunho ou em revisão.';
+    end if;
+    if new.status = 'pending_review'
+      and not (
+        new.owner_id = auth.uid()
+        and public.tickr_has_role('organizer')
+      )
+      and not public.tickr_has_role('admin')
+      and session_user not in ('postgres', 'supabase_admin') then
+      raise exception 'Não tens permissão para enviar este evento para revisão.';
     end if;
     return new;
   end if;
@@ -679,6 +690,7 @@ begin
   end if;
 
   if p_role = 'admin' and not p_enabled then
+    lock table public.tickr_user_roles in share row exclusive mode;
     select count(*) into admin_count
     from public.tickr_user_roles as user_role
     join public.tickr_profiles as profile on profile.id = user_role.user_id
@@ -961,10 +973,7 @@ create policy tickr_events_read on public.tickr_events
     status = 'published'
     or owner_id = auth.uid()
     or public.tickr_has_role('admin')
-    or exists (
-      select 1 from public.tickr_event_staff as staff
-      where staff.event_id = id and staff.user_id = auth.uid()
-    )
+    or public.tickr_can_scan_event(id)
   );
 drop policy if exists tickr_events_create on public.tickr_events;
 create policy tickr_events_create on public.tickr_events
@@ -1060,7 +1069,16 @@ drop policy if exists tickr_comments_delete_own on public.tickr_comments;
 drop policy if exists tickr_reports_create on public.tickr_comment_reports;
 create policy tickr_reports_create on public.tickr_comment_reports
   for insert to authenticated
-  with check (reporter_id = auth.uid());
+  with check (
+    reporter_id = auth.uid()
+    and exists (
+      select 1
+      from public.tickr_comments as comment
+      where comment.id = comment_id
+        and comment.author_id <> auth.uid()
+        and comment.status = 'visible'
+    )
+  );
 drop policy if exists tickr_reports_read_own_or_moderator on public.tickr_comment_reports;
 create policy tickr_reports_read_own_or_moderator on public.tickr_comment_reports
   for select to authenticated
@@ -1199,6 +1217,7 @@ grant execute on function public.tickr_has_role(public.tickr_role) to anon, auth
 revoke all on function public.tickr_can_manage_event(uuid) from public;
 grant execute on function public.tickr_can_manage_event(uuid) to anon, authenticated;
 revoke all on function public.tickr_can_scan_event(uuid) from public;
+grant execute on function public.tickr_can_scan_event(uuid) to anon, authenticated;
 revoke all on function public.tickr_content_is_public(text, uuid) from public;
 grant execute on function public.tickr_content_is_public(text, uuid) to anon, authenticated;
 revoke all on function public.tickr_can_rate_event(uuid, uuid) from public;

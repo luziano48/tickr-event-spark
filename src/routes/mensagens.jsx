@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowLeft,
@@ -14,7 +14,8 @@ import {
   X,
 } from "lucide-react";
 import { Screen } from "@/components/tickr/Screen";
-import { pendingMessageCount, sponsorRequests, ticketRequests } from "@/data/messages";
+import { sponsorRequests } from "@/data/messages";
+import { ticketRequestsApi } from "@/lib/api/ticket-requests";
 
 export const Route = createFileRoute("/mensagens")({
   head: () => ({
@@ -37,16 +38,68 @@ export const Route = createFileRoute("/mensagens")({
 });
 
 function Mensagens() {
-  const [ticketStates, setTicketStates] = useState({});
+  const [ticketRequests, setTicketRequests] = useState([]);
+  const [isLoadingRequests, setIsLoadingRequests] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [requestError, setRequestError] = useState("");
   const [sponsorStates, setSponsorStates] = useState({});
 
-  const setTicketStatus = (id, status) => {
-    setTicketStates((current) => ({ ...current, [id]: status }));
+  useEffect(() => {
+    let active = true;
+    ticketRequestsApi
+      .list()
+      .then((result) => {
+        if (!active) return;
+        setIsAuthenticated(result.authenticated);
+        setTicketRequests(result.requests);
+      })
+      .catch((error) => {
+        if (active) setRequestError(error.message || "Não foi possível carregar os pedidos.");
+      })
+      .finally(() => {
+        if (active) setIsLoadingRequests(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const setTicketStatus = async (id, status) => {
+    setRequestError("");
+    try {
+      await ticketRequestsApi.update(id, status);
+      setTicketRequests((current) =>
+        current.map((request) => (request.id === id ? { ...request, status } : request)),
+      );
+    } catch (error) {
+      setRequestError(error.message || "Não foi possível actualizar o pedido.");
+    }
   };
 
   const setSponsorStatus = (id, status) => {
     setSponsorStates((current) => ({ ...current, [id]: status }));
   };
+
+  if (!isLoadingRequests && !isAuthenticated) {
+    return (
+      <Screen>
+        <main className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
+          <h1 className="text-xl font-extrabold">Área do organizador</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Inicia sessão para consultar os pedidos enviados para os teus eventos.
+          </p>
+          <Link
+            to="/login"
+            className="grad-primary glow mt-5 rounded-full px-6 py-3 text-sm font-bold text-primary-foreground"
+          >
+            Iniciar sessão
+          </Link>
+        </main>
+      </Screen>
+    );
+  }
+
+  const pendingRequests = ticketRequests.filter((request) => request.status === "new").length;
 
   return (
     <Screen>
@@ -65,7 +118,7 @@ function Mensagens() {
         <div className="text-right">
           <p className="text-[10px] font-semibold text-muted-foreground">Por responder</p>
           <span className="mt-1 inline-grid min-w-7 place-items-center rounded-full bg-primary px-2 py-1 text-xs font-extrabold text-primary-foreground">
-            {pendingMessageCount}
+            {pendingRequests}
           </span>
         </div>
       </header>
@@ -91,6 +144,25 @@ function Mensagens() {
             </span>
           </div>
 
+          {requestError ? (
+            <p
+              role="alert"
+              className="mb-3 rounded-xl bg-destructive/10 p-3 text-xs text-destructive"
+            >
+              {requestError}
+            </p>
+          ) : null}
+          {isLoadingRequests ? (
+            <p className="rounded-2xl bg-surface p-4 text-sm text-muted-foreground">
+              A carregar pedidos…
+            </p>
+          ) : null}
+          {!isLoadingRequests && ticketRequests.length === 0 ? (
+            <p className="rounded-2xl bg-surface p-4 text-sm text-muted-foreground">
+              Ainda não recebeste pedidos de ingressos.
+            </p>
+          ) : null}
+
           <ul className="space-y-3">
             {ticketRequests.map((request) => (
               <li key={request.id}>
@@ -101,46 +173,55 @@ function Mensagens() {
                         <UserRound className="size-4" />
                       </span>
                       <div>
-                        <h3 className="text-sm font-extrabold">{request.name}</h3>
+                        <h3 className="text-sm font-extrabold">{request.buyer_name}</h3>
                         <p className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
-                          <Clock3 className="size-3" /> {request.time}
+                          <Clock3 className="size-3" />{" "}
+                          {new Date(request.created_at).toLocaleString("pt-PT")}
                         </p>
                       </div>
                     </div>
                     <span className="shrink-0 rounded-full bg-warning-soft px-2 py-1 text-[10px] font-bold text-warning">
-                      {ticketStates[request.id] || request.status}
+                      {request.status === "new"
+                        ? "Novo pedido"
+                        : request.status === "contacted"
+                          ? "Contactado"
+                          : "Fechado"}
                     </span>
                   </div>
                   <div className="mt-4 rounded-2xl bg-surface p-3">
-                    <p className="text-xs font-semibold">{request.event.title}</p>
+                    <p className="text-xs font-semibold">{request.event_title}</p>
                     <div className="mt-2 flex flex-wrap gap-2">
                       <span className="rounded-md bg-card px-2 py-1 text-[10px] font-semibold text-muted-foreground">
-                        {request.quantity}
+                        {request.quantity} {request.quantity === 1 ? "ingresso" : "ingressos"}
                       </span>
                       <span className="rounded-md bg-primary/15 px-2 py-1 text-[10px] font-semibold text-primary">
-                        {request.type}
+                        {request.ticket_name}
                       </span>
                     </div>
                   </div>
                   <div className="mt-3 flex items-center gap-1.5 text-[11px] text-muted-foreground">
                     <Phone className="size-3.5" />
-                    <span>{request.phone}</span>
+                    <span>{request.buyer_phone}</span>
+                  </div>
+                  <div className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    <Mail className="size-3.5" />
+                    <span>{request.buyer_email}</span>
                   </div>
                   <div className="mt-4 grid grid-cols-2 gap-2 border-t border-border pt-4">
                     <a
-                      href={`tel:${request.phone}`}
+                      href={`tel:${request.buyer_phone}`}
                       className="flex items-center justify-center gap-1.5 rounded-full border border-primary/40 px-3 py-2.5 text-xs font-bold text-primary"
                     >
                       <Phone className="size-3.5" /> Contactar
                     </a>
                     <button
                       type="button"
-                      onClick={() => setTicketStatus(request.id, "Aprovado")}
-                      disabled={ticketStates[request.id] === "Aprovado"}
+                      onClick={() => setTicketStatus(request.id, "contacted")}
+                      disabled={request.status !== "new"}
                       className="flex items-center justify-center gap-1 rounded-full bg-primary px-3 py-2.5 text-xs font-bold text-primary-foreground shadow-lg shadow-primary/15 disabled:opacity-60"
                     >
-                      <Check className="size-3.5" />{" "}
-                      {ticketStates[request.id] === "Aprovado" ? "Aprovado" : "Aprovar"}
+                      <Check className="size-3.5" />
+                      {request.status === "new" ? "Marcar contactado" : "Actualizado"}
                     </button>
                   </div>
                 </article>

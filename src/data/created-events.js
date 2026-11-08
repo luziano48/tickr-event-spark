@@ -24,26 +24,19 @@ export function loadCreatedEvents() {
   }
 }
 
-function slugify(text) {
-  return text
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "")
-    .slice(0, 40);
-}
-
 function formatDate(value) {
   const [y, m, d] = value.split("-");
   return `${Number(d)} ${MONTHS[Number(m) - 1]} ${y}`;
 }
 
-export function saveCreatedEvent(form, imageData) {
+export function saveCreatedEvent(form, storedEvent) {
   const prices = form.tickets.map((t) => Number(t.price) || 0);
   const min = Math.min(...prices);
   const event = {
-    id: `${slugify(form.title) || "evento"}-${Date.now().toString(36)}`,
+    id: storedEvent.id,
+    slug: storedEvent.slug,
+    ownerId: storedEvent.ownerId,
+    status: storedEvent.status,
     title: form.title.trim(),
     category: form.category,
     date: formatDate(form.date),
@@ -51,9 +44,9 @@ export function saveCreatedEvent(form, imageData) {
     city: form.city.trim(),
     venue: form.venue.trim(),
     price: min === 0 ? "Grátis" : `Kz ${min.toLocaleString("pt-PT")}`,
-    organizer: "Tickr Eventos",
-    organizerUsername: "@tickr.eventos",
-    image: imageData || festival,
+    organizer: storedEvent.organizer,
+    organizerUsername: storedEvent.organizerUsername,
+    image: storedEvent.imageUrl || festival,
     description: form.description.trim(),
     age: form.age,
     rules: form.rules.trim(),
@@ -66,8 +59,7 @@ export function saveCreatedEvent(form, imageData) {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
   } catch {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify([{ ...event, image: festival }]));
-    event.image = festival;
+    console.warn("O evento foi guardado no Supabase, mas não foi possível guardar a cópia local.");
   }
   return event;
 }

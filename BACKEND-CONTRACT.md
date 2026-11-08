@@ -16,29 +16,33 @@ O schema da Fase 1 está definido em `supabase/migrations/20261108160000_phase1_
 
 ## Estado dos contratos
 
-| Operação | Estado | Comportamento |
-| --- | --- | --- |
-| Sessão / entrar / sair | Ligado | Supabase Auth no servidor e cookies de sessão protegidos |
-| Registo | Ligado | Trigger cria perfil, preferências e papéis iniciais a partir de metadata validada |
-| Recuperação / palavra-passe | Ligado | Email de recuperação com troca do código no servidor e actualização autenticada |
-| Perfil / papéis | Ligado | Consulta e actualização de perfil; gestão de papéis apenas por RPC administrativa |
-| Schema / RLS | Migration preparada | Aplicação manual no SQL Editor; promove o primeiro administrador através do procedimento documentado |
-| Preferências da conta | Pendente | Endpoint `/api/account/preferences` ainda não implementado |
+| Operação                    | Estado                 | Comportamento                                                                                        |
+| --------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------- |
+| Sessão / entrar / sair      | Ligado                 | Supabase Auth no servidor e cookies de sessão protegidos                                             |
+| Registo                     | Ligado                 | Trigger cria perfil, preferências e papéis iniciais a partir de metadata validada                    |
+| Recuperação / palavra-passe | Ligado                 | Email de recuperação com troca do código no servidor e actualização autenticada                      |
+| Perfil / papéis             | Ligado                 | Consulta e actualização de perfil; gestão de papéis apenas por RPC administrativa                    |
+| Schema / RLS                | Migration preparada    | Aplicação manual no SQL Editor; promove o primeiro administrador através do procedimento documentado |
+| Criação de eventos          | Ligado após migrations | RPC atómico guarda evento + tipos de ingresso com `owner_id` da sessão; estado inicial em revisão    |
+| Eventos de demonstração     | Seed preparada         | Quatro eventos associados à conta oficial Tickr Eventos; sem inventar dados de lotação/tickets       |
+| Pedido de ingresso visitante | Ligado após migration  | Sem conta nem pagamento; pedido fica visível apenas ao dono/gestor autenticado do evento              |
+| Preferências da conta       | Pendente               | Endpoint `/api/account/preferences` ainda não implementado                                           |
 
 As funções de autenticação são funções de servidor TanStack Start, não endpoints REST públicos. Os restantes endpoints que ainda não existem respondem como serviço indisponível; não há autenticação simulada nem envio de recuperação fingido.
 
 ## Pendências de backend
 
 - Aplicar a migration da Fase 1 no projecto Supabase e promover o primeiro administrador.
+- Aplicar `supabase/migrations/20261108220000_guest_ticket_requests.sql` antes de activar pedidos de ingresso sem conta.
 - Configurar URLs de redireccionamento de email no projecto Supabase para desenvolvimento e produção.
 - Implementar contratos acima, recuperação real, auditoria e rate limiting.
-- Implementar endpoints e transacções para eventos, pedidos, bilhetes, QR e prevenção de duplicados.
+- Implementar endpoints e transacções para pedidos, pagamentos, emissão de bilhetes/QR e prevenção de duplicados.
 - Confirmar quais preferências de notificação são suportadas e respectivos canais.
 - Não tratar a interface actual como protecção de rotas ou segurança de produção.
 
 ## Comentários, avaliações e retirada segura de conexões
 
-A migration de fundação cria as tabelas `tickr_*`, mas ainda não foi aplicada ao projecto remoto e não integra os ecrãs existentes de comentários/avaliações. Nenhuma tabela ou relacionamento remoto foi alterado. Antes de executar a migration num projecto com dados, exportar e rever o schema remoto, políticas RLS, views, triggers, funções, jobs, integrações e contagens de dados; preservar uma cópia de segurança e manter os dados antigos arquivados até confirmar que nenhum cliente os consulta.
+A migration de fundação cria as tabelas `tickr_*`, mas tem de ser executada no projecto remoto e não integra os ecrãs existentes de comentários/avaliações. Nenhuma tabela ou relacionamento remoto foi alterado pelo código local. Antes de executar as migrations num projecto com dados, exportar e rever o schema remoto, políticas RLS, views, triggers, funções, jobs, integrações e contagens de dados; preservar uma cópia de segurança e manter os dados antigos arquivados até confirmar que nenhum cliente os consulta.
 
 ### Contratos de conteúdo
 

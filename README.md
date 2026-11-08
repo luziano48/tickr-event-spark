@@ -26,27 +26,19 @@ npm i
 
 Cria `.env.local` a partir de `.env.example` e configura o URL do projecto e a chave pública `anon`/`publishable`. Em produção, define também `VITE_SITE_URL` com o endereço público da aplicação para os links de email. Em desenvolvimento local, o endereço é detectado automaticamente. Nunca uses uma chave `service_role` no frontend ou neste ficheiro.
 
-No painel Supabase, adiciona o domínio local e os domínios de produção à lista de URLs de redireccionamento de autenticação. O login, registo, sessão e recuperação de palavra-passe usam funções de servidor e cookies protegidos. Os dados de eventos e ingressos continuam a usar os dados de demonstração até existir um schema aprovado.
+No painel Supabase, adiciona o domínio local e os domínios de produção à lista de URLs de redireccionamento de autenticação. O login, registo, sessão e recuperação de palavra-passe usam funções de servidor e cookies protegidos. A criação de eventos grava os dados no Supabase e atribui a propriedade ao perfil autenticado; os eventos novos ficam em revisão.
 
 ### Fundação da base de dados
 
-1. No Supabase, abre **SQL Editor → New query**.
-2. Cola e executa uma única vez o conteúdo de [`supabase/migrations/20261108160000_phase1_foundation.sql`](./supabase/migrations/20261108160000_phase1_foundation.sql). A migration é aditiva e cria as tabelas `tickr_*`, funções, triggers, papéis e políticas RLS; não apaga tabelas da aplicação nem dados de demonstração.
-3. Cria a primeira conta pela aplicação e confirma o email, se a confirmação estiver activa.
-4. No SQL Editor, substitui o email abaixo pelo da conta que será administradora e executa **uma única vez**. Isto atribui o primeiro papel `admin`; depois, a gestão de papéis passa pela função protegida `tickr_set_role`.
+1. No Supabase, abre **SQL Editor → New query** e executa [a migration de fundação actualizada](./supabase/migrations/20261108160000_phase1_foundation.sql). Se já a executaste antes, volta a executá-la: as alterações são aditivas e actualizam as regras de estado dos eventos.
+2. Executa [a migration de criação de eventos](./supabase/migrations/20261108210000_event_creation.sql), que prepara o Storage e a gravação atómica de eventos e ingressos.
+3. Executa [a migration de pedidos de ingresso](./supabase/migrations/20261108220000_guest_ticket_requests.sql). Visitantes podem enviar pedidos sem conta ou pagamento; só o dono/gestor autenticado do evento pode consultar os dados do pedido.
+4. Cria/confirma pela aplicação a conta que representa **Tickr Eventos**.
+5. Abre [`supabase/seeds/official_demo_events.sql`](./supabase/seeds/official_demo_events.sql), substitui `REPLACE_WITH_TICKR_ACCOUNT_EMAIL` pelo email dessa conta e executa uma vez no SQL Editor. Isso configura o perfil Tickr Eventos, atribui-lhe os papéis de organizador e administrador e importa os quatro eventos de demonstração sem substituir registos existentes.
 
-```sql
-insert into public.tickr_user_roles (user_id, role)
-select id, 'admin'::public.tickr_role
-from auth.users
-where lower(email) = lower('teu-email@exemplo.com')
-  and not exists (
-    select 1 from public.tickr_user_roles where role = 'admin'
-  )
-on conflict (user_id, role) do nothing;
-```
+Confirma que o email corresponde à tua conta oficial. Depois, novos eventos e tipos de ingresso são gravados no Supabase numa operação, com `owner_id` definido pela sessão autenticada; os dados locais antigos não são importados automaticamente. Os eventos de demonstração sem preços/capacidades completos são importados como eventos, sem inventar tipos de ingresso. A conta promovida a administrador deve ser controlada pelo responsável do projecto.
 
-Confirma que a consulta afectou uma linha e que o email corresponde à tua conta. A migration prepara a fundação completa, mas os ecrãs de eventos, ingressos e comunidade continuam em modo de demonstração nesta fase.
+Os pedidos de ingresso são apenas mensagens de interesse: não cobram, não criam bilhetes e não reservam lugares. A função do Supabase valida o evento publicado e limita pedidos repetidos por email/evento. Mantém activa a RLS e aplica a migration acima antes de disponibilizar o formulário.
 
 ```sh
 npm run dev
