@@ -1,29 +1,64 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { CalendarDays, BriefcaseBusiness } from "lucide-react";
+import {
+  ArrowRight,
+  BriefcaseBusiness,
+  CalendarDays,
+  Eye,
+  EyeOff,
+  LockKeyhole,
+  Mail,
+  UserRound,
+} from "lucide-react";
+import { Logo } from "@/components/tickr/Logo";
+import { Button } from "@/components/ui/button";
+import festivalImage from "@/assets/festival.jpg";
 import { authApi } from "@/lib/api/auth";
-export const Route = createFileRoute("/login")({ component: Auth });
+
+export const Route = createFileRoute("/login")({
+  head: () => ({
+    meta: [
+      { title: "Entrar ou criar conta | Tickr" },
+      {
+        name: "description",
+        content: "Acede à Tickr para descobrir eventos ou gerir o teu negócio de eventos em Angola.",
+      },
+      { property: "og:title", content: "Entrar ou criar conta | Tickr" },
+      {
+        property: "og:description",
+        content: "Acede à Tickr para descobrir eventos ou gerir o teu negócio de eventos em Angola.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: Auth,
+});
+
 const roles = [
   {
     id: "organizer",
     title: "Organizo eventos",
-    text: "Cria e gere eventos, vende bilhetes, organiza a tua equipa e valida entradas através de QR Code.",
+    text: "Cria eventos, vende bilhetes e gere a tua equipa.",
     Icon: CalendarDays,
   },
   {
     id: "service_provider",
     title: "Ofereço serviços",
-    text: "Mostra o teu trabalho em som, catering, segurança, decoração ou fotografia e recebe pedidos de organizadores de eventos.",
+    text: "Apresenta os teus serviços e recebe pedidos de organizadores.",
     Icon: BriefcaseBusiness,
   },
 ];
+
 function Auth() {
-  const [mode, setMode] = useState("login"),
-    [error, setError] = useState(""),
-    [note, setNote] = useState(""),
-    [busy, setBusy] = useState(false);
-  const navigate = useNavigate();
+  const [mode, setMode] = useState("login");
+  const [error, setError] = useState("");
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [selectedRole, setSelectedRole] = useState("organizer");
+  const navigate = useNavigate();
+
   useEffect(() => {
     const search = new URLSearchParams(window.location.search);
     const code = search.get("code");
@@ -51,13 +86,20 @@ function Auth() {
     };
   }, [navigate]);
 
+  function changeMode(nextMode) {
+    setMode(nextMode);
+    setError("");
+    setNote("");
+  }
+
   async function submit(e) {
     e.preventDefault();
     setError("");
     setNote("");
-    const f = new FormData(e.currentTarget);
-    const email = String(f.get("email") || "").trim();
-    const password = String(f.get("password") || "");
+    const form = new FormData(e.currentTarget);
+    const email = String(form.get("email") || "").trim();
+    const password = String(form.get("password") || "");
+
     if (mode !== "update" && !/^\S+@\S+\.\S+$/.test(email)) {
       setError("Introduz um email válido.");
       return;
@@ -66,18 +108,19 @@ function Auth() {
       setError("Introduz a tua palavra-passe.");
       return;
     }
-    if (mode === "update" && password.length < 8) {
+    if ((mode === "update" || mode === "register") && password.length < 8) {
       setError("A palavra-passe deve ter pelo menos 8 caracteres.");
       return;
     }
+
     setBusy(true);
     try {
-      if (mode === "login") await authApi.signIn({ email, password });
-      else if (mode === "register") {
-        const name = String(f.get("name") || "").trim();
+      if (mode === "login") {
+        await authApi.signIn({ email, password });
+      } else if (mode === "register") {
+        const name = String(form.get("name") || "").trim();
         if (!name) throw Error("Introduz o teu nome.");
-        if (password.length < 8) throw Error("A palavra-passe deve ter pelo menos 8 caracteres.");
-        if (password !== f.get("confirm")) throw Error("As palavras-passe não correspondem.");
+        if (password !== form.get("confirm")) throw Error("As palavras-passe não correspondem.");
         const result = await authApi.signUp({
           name,
           email,
@@ -93,7 +136,7 @@ function Auth() {
         setNote(result?.message || "Se a conta existir, receberás instruções de recuperação.");
         return;
       } else {
-        if (password !== f.get("confirm")) throw Error("As palavras-passe não correspondem.");
+        if (password !== form.get("confirm")) throw Error("As palavras-passe não correspondem.");
         await authApi.updatePassword(password);
       }
       navigate({ to: "/" });
@@ -103,149 +146,203 @@ function Auth() {
       setBusy(false);
     }
   }
+
+  const heading =
+    mode === "update"
+      ? "Nova palavra-passe"
+      : mode === "register"
+        ? "Cria a tua conta"
+        : mode === "recover"
+          ? "Recupera o acesso"
+          : "Entra na tua conta";
+
   return (
-    <main className="min-h-screen bg-[#0f0f0f] px-4 py-8 text-white sm:grid sm:grid-cols-2 sm:items-center sm:gap-12 sm:px-12">
-      <section className="mx-auto max-w-lg sm:mx-0">
-        <Link to="/" className="text-xl font-extrabold tracking-tight">
-          tickr<span className="text-[#75efbd]">.</span>
-        </Link>
-        <p className="mt-12 text-xs font-bold uppercase tracking-[.2em] text-[#75efbd]">
-          Eventos e serviços em Angola
-        </p>
-        <h1 className="mt-4 text-4xl font-extrabold leading-tight">
-          A tua próxima grande experiência começa aqui.
-        </h1>
-        <p className="mt-4 max-w-md text-sm leading-6 text-white/70">
-          Entra na Tickr para descobrir eventos ou gerir a tua actividade comercial.
-        </p>
-      </section>
-      <section className="mx-auto mt-10 w-full max-w-lg rounded-3xl border border-white/10 bg-[#171717] p-5 sm:mt-0 sm:p-7">
-        <h2 className="text-xl font-bold">
-          {mode === "update" ? "Nova palavra-passe" : "Escolhe o teu perfil"}
-        </h2>
-        {mode !== "update" && (
-          <div className="mt-4 grid gap-3">
-            {roles.map(({ id, title, text, Icon }) => (
-              <button
-                type="button"
-                key={id}
-                onClick={() => setSelectedRole(id)}
-                aria-pressed={selectedRole === id}
-                className={`relative rounded-2xl border p-4 text-left transition-colors focus-visible:outline-2 focus-visible:outline-[#75efbd] ${selectedRole === id ? "border-[#75efbd] bg-[#75efbd]/10" : "border-white/15 hover:border-white/40"}`}
-              >
-                <span className="flex items-center gap-2 font-bold">
-                  <Icon className="size-5 text-[#75efbd]" />
-                  {title}
-                </span>
-                <span className="mt-3 block border-t border-dashed border-white/25 pt-3 text-xs leading-5 text-white/70">
-                  {text}
-                </span>
-                {selectedRole === id && (
-                  <span className="absolute right-3 top-4 text-xs text-[#75efbd]">
-                    ✓ Seleccionado
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-        )}
-        {mode !== "update" && (
-          <div className="mt-5 flex gap-4 text-sm">
-            <button
-              onClick={() => setMode("login")}
-              className={mode === "login" ? "text-[#75efbd]" : "text-white/60"}
-            >
-              Entrar
-            </button>
-            <button
-              onClick={() => setMode("register")}
-              className={mode === "register" ? "text-[#75efbd]" : "text-white/60"}
-            >
-              Criar conta
-            </button>
-            <button
-              onClick={() => setMode("recover")}
-              className={mode === "recover" ? "text-[#75efbd]" : "text-white/60"}
-            >
-              Recuperar
-            </button>
-          </div>
-        )}
-        <form onSubmit={submit} className="mt-4 space-y-3">
-          {mode === "register" && (
-            <input name="name" placeholder="Nome" autoComplete="name" className="auth-input" />
-          )}
-          {mode !== "update" && (
-            <input
-              name="email"
-              type="email"
-              placeholder="Email"
-              autoComplete="email"
-              className="auth-input"
-              required
-            />
-          )}
-          {mode !== "recover" && (
-            <>
-              <input
-                name="password"
-                type="password"
-                placeholder="Palavra-passe"
-                autoComplete={mode === "login" ? "current-password" : "new-password"}
-                className="auth-input"
-                required
-              />
-              {mode === "register" && (
-                <input
-                  name="confirm"
-                  type="password"
-                  placeholder="Confirmar palavra-passe"
-                  className="auth-input"
-                  required
-                />
-              )}
-              {mode === "update" && (
-                <input
-                  name="confirm"
-                  type="password"
-                  placeholder="Confirmar nova palavra-passe"
-                  autoComplete="new-password"
-                  className="auth-input"
-                  required
-                />
-              )}
-            </>
-          )}
-          <button
-            disabled={busy}
-            className="w-full rounded-xl bg-[#75efbd] py-3 font-bold text-[#10241b] disabled:opacity-60"
+    <main className="auth-shell min-h-screen px-4 py-4 sm:px-8 sm:py-8">
+      <div className="mx-auto grid min-h-[calc(100svh-2rem)] max-w-6xl overflow-hidden rounded-md border border-auth-border bg-auth-panel shadow-2xl sm:min-h-[min(820px,calc(100svh-4rem))] sm:grid-cols-2">
+        <section className="relative flex min-h-52 flex-col justify-between overflow-hidden p-5 sm:min-h-[680px] sm:p-8">
+          <img
+            src={festivalImage}
+            alt="Concerto ao vivo com público e luzes de palco"
+            className="absolute inset-0 size-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-auth-bg via-auth-bg/55 to-auth-bg/20" />
+          <Link
+            to="/"
+            aria-label="Tickr, página inicial"
+            className="relative z-10 inline-flex w-fit rounded-sm bg-card px-2 py-1 shadow-md"
           >
-            {busy
-              ? "A processar…"
-              : mode === "login"
-                ? "Entrar"
-                : mode === "register"
-                  ? "Criar conta"
-                  : mode === "update"
-                    ? "Actualizar palavra-passe"
-                    : "Enviar pedido"}
-          </button>
-          {error && (
-            <p role="alert" className="text-sm text-red-300">
-              {error}
+            <Logo className="h-9 w-auto sm:h-11" />
+          </Link>
+          <div className="relative z-10 mt-10 max-w-md pb-1 sm:mt-auto sm:pb-4">
+            <p className="mb-3 text-xs font-bold uppercase text-auth-accent">
+              Eventos e serviços em Angola
             </p>
-          )}
-          {note && (
-            <p role="status" className="text-sm text-[#75efbd]">
-              {note}
+            <h1 className="font-display text-3xl font-bold leading-tight text-auth-foreground sm:text-4xl">
+              A tua próxima grande experiência começa aqui.
+            </h1>
+            <p className="mt-3 max-w-sm text-sm leading-6 text-auth-muted">
+              Descobre eventos, encontra parceiros e faz parte da comunidade Tickr.
             </p>
-          )}
-        </form>
-        <p className="mt-4 text-[11px] text-white/45">
-          A autenticação e recuperação são geridas pelo Supabase.
-        </p>
-      </section>
-      <style>{`.auth-input{width:100%;border-radius:.75rem;border:1px solid #ffffff30;background:#101010;padding:.8rem .9rem;color:white;outline:none}.auth-input:focus{border-color:#75efbd;box-shadow:0 0 0 2px #75efbd55} @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}`}</style>
+          </div>
+        </section>
+
+        <section className="flex items-center justify-center px-4 py-7 sm:px-10 sm:py-10 lg:px-14">
+          <div className="w-full max-w-md">
+            <div className="mb-6">
+              <p className="text-sm font-semibold text-auth-accent">Bem-vindo à Tickr</p>
+              <h2 className="mt-2 text-2xl font-bold text-auth-foreground">{heading}</h2>
+              <p className="mt-2 text-sm leading-6 text-auth-muted">
+                {mode === "register"
+                  ? "Escolhe como vais usar a plataforma e começa a tua jornada."
+                  : mode === "recover"
+                    ? "Vamos enviar instruções para o email associado à tua conta."
+                    : mode === "update"
+                      ? "Escolhe uma palavra-passe nova para continuares."
+                      : "Acede aos teus eventos, bilhetes e ferramentas de gestão."}
+              </p>
+            </div>
+
+            {mode !== "update" && (
+              <div className="mb-6 grid grid-cols-3 border-b border-auth-border" role="tablist" aria-label="Acesso à conta">
+                {[
+                  ["login", "Entrar"],
+                  ["register", "Criar conta"],
+                  ["recover", "Recuperar"],
+                ].map(([value, label]) => (
+                  <Button
+                    key={value}
+                    type="button"
+                    role="tab"
+                    aria-selected={mode === value}
+                    onClick={() => changeMode(value)}
+                    className={`min-h-11 rounded-none border-b-2 px-2 text-sm ${mode === value ? "border-auth-accent text-auth-accent" : "border-transparent text-auth-muted hover:text-auth-foreground"}`}
+                  >
+                    {label}
+                  </Button>
+                ))}
+              </div>
+            )}
+
+            {mode === "register" && (
+              <div className="mb-5 grid gap-2 sm:grid-cols-2">
+                {roles.map(({ id, title, text, Icon }) => (
+                  <Button
+                    key={id}
+                    type="button"
+                    aria-pressed={selectedRole === id}
+                    onClick={() => setSelectedRole(id)}
+                    className={`min-h-28 flex-col items-start justify-start gap-2 rounded-sm border p-3 text-left ${selectedRole === id ? "border-auth-accent bg-auth-accent/10 text-auth-foreground" : "border-auth-border bg-auth-panel text-auth-muted hover:border-auth-muted"}`}
+                  >
+                    <span className="flex items-center gap-2 text-sm font-bold">
+                      <Icon className="size-4 text-auth-accent" /> {title}
+                    </span>
+                    <span className="text-xs leading-5">{text}</span>
+                  </Button>
+                ))}
+              </div>
+            )}
+
+            <form onSubmit={submit} className="space-y-3.5">
+              {mode === "register" && (
+                <label className="block">
+                  <span className="mb-1.5 block text-xs font-semibold text-auth-muted">Nome</span>
+                  <span className="relative block">
+                    <UserRound className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-auth-muted" />
+                    <input
+                      name="name"
+                      placeholder="O teu nome completo"
+                      autoComplete="name"
+                      className="auth-input pl-10"
+                      required
+                    />
+                  </span>
+                </label>
+              )}
+
+              {mode !== "update" && (
+                <label className="block">
+                  <span className="mb-1.5 block text-xs font-semibold text-auth-muted">Email</span>
+                  <span className="relative block">
+                    <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-auth-muted" />
+                    <input
+                      name="email"
+                      type="email"
+                      placeholder="nome@email.com"
+                      autoComplete="email"
+                      className="auth-input pl-10"
+                      required
+                    />
+                  </span>
+                </label>
+              )}
+
+              {mode !== "recover" && (
+                <>
+                  <label className="block">
+                    <span className="mb-1.5 block text-xs font-semibold text-auth-muted">
+                      {mode === "update" ? "Nova palavra-passe" : "Palavra-passe"}
+                    </span>
+                    <span className="relative block">
+                      <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-auth-muted" />
+                      <input
+                        name="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Pelo menos 8 caracteres"
+                        autoComplete={mode === "login" ? "current-password" : "new-password"}
+                        className="auth-input pl-10 pr-11"
+                        required
+                      />
+                      <Button
+                        type="button"
+                        aria-label={showPassword ? "Ocultar palavra-passe" : "Mostrar palavra-passe"}
+                        onClick={() => setShowPassword((visible) => !visible)}
+                        className="absolute right-1 top-1/2 size-9 -translate-y-1/2 rounded-sm text-auth-muted hover:text-auth-foreground"
+                      >
+                        {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                      </Button>
+                    </span>
+                  </label>
+
+                  {(mode === "register" || mode === "update") && (
+                    <label className="block">
+                      <span className="mb-1.5 block text-xs font-semibold text-auth-muted">
+                        Confirmar palavra-passe
+                      </span>
+                      <span className="relative block">
+                        <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-auth-muted" />
+                        <input
+                          name="confirm"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Repete a palavra-passe"
+                          autoComplete="new-password"
+                          className="auth-input pl-10"
+                          required
+                        />
+                      </span>
+                    </label>
+                  )}
+                </>
+              )}
+
+              <Button
+                type="submit"
+                disabled={busy}
+                className="grad-primary glow mt-2 min-h-12 w-full rounded-sm text-sm font-bold text-primary-foreground disabled:cursor-not-allowed"
+              >
+                {busy ? "A processar…" : mode === "login" ? "Entrar" : mode === "register" ? "Criar conta" : mode === "update" ? "Actualizar palavra-passe" : "Enviar instruções"}
+                {!busy && <ArrowRight className="size-4" />}
+              </Button>
+
+              {error && <p role="alert" className="rounded-sm border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
+              {note && <p role="status" className="rounded-sm border border-auth-accent/30 bg-auth-accent/10 px-3 py-2 text-sm text-auth-accent">{note}</p>}
+            </form>
+
+            <p className="mt-5 text-center text-xs text-auth-muted">
+              Ao continuar, estás a aceder à tua conta Tickr com segurança.
+            </p>
+          </div>
+        </section>
+      </div>
     </main>
   );
 }
