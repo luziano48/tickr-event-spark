@@ -41,6 +41,13 @@
   --color-warning: var(--warning);
   --color-warning-soft: var(--warning-soft);
   --color-danger-soft: var(--danger-soft);
+  --color-auth-bg: var(--auth-bg);
+  --color-auth-panel: var(--auth-panel);
+  --color-auth-input: var(--auth-input);
+  --color-auth-foreground: var(--auth-foreground);
+  --color-auth-muted: var(--auth-muted);
+  --color-auth-border: var(--auth-border);
+  --color-auth-accent: var(--auth-accent);
   --font-display: "Sora", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 }
@@ -91,8 +98,42 @@
   --warning: oklch(0.63 0.16 75);
   --warning-soft: oklch(0.95 0.055 80);
   --danger-soft: oklch(0.95 0.045 25);
+  --auth-bg: oklch(0.15 0.018 248);
+  --auth-panel: oklch(0.19 0.022 248);
+  --auth-input: oklch(0.16 0.018 248);
+  --auth-foreground: oklch(0.97 0.008 180);
+  --auth-muted: oklch(0.72 0.02 220);
+  --auth-border: oklch(1 0 0 / 12%);
+  --auth-accent: oklch(0.78 0.16 160);
   --gradient-primary: linear-gradient(135deg, var(--mint), var(--primary));
   --shadow-glow: 0 12px 40px -12px color-mix(in oklab, var(--primary) 25%, transparent);
+}
+
+.auth-shell {
+  background: var(--auth-bg);
+  color: var(--auth-foreground);
+}
+
+.auth-input {
+  display: block;
+  min-height: 2.875rem;
+  width: 100%;
+  border: 1px solid var(--auth-border);
+  border-radius: 0.25rem;
+  background: var(--auth-input);
+  color: var(--auth-foreground);
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.auth-input::placeholder {
+  color: var(--auth-muted);
+  opacity: 0.75;
+}
+
+.auth-input:focus-visible {
+  border-color: var(--auth-accent);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--auth-accent) 32%, transparent);
 }
 @layer base {
   * {
