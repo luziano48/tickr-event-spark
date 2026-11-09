@@ -15,6 +15,7 @@ import { Route as DefinicoesRouteImport } from './routes/definicoes'
 import { Route as EventosRouteImport } from './routes/eventos'
 import { Route as ExplorarRouteImport } from './routes/explorar'
 import { Route as IngressosRouteImport } from './routes/ingressos'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as MensagensRouteImport } from './routes/mensagens'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as PrivacidadeRouteImport } from './routes/privacidade'
@@ -51,6 +52,11 @@ const ExplorarRoute = ExplorarRouteImport.update({
 const IngressosRoute = IngressosRouteImport.update({
   id: '/ingressos',
   path: '/ingressos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MensagensRoute = MensagensRouteImport.update({
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/eventos': typeof EventosRoute
   '/explorar': typeof ExplorarRoute
   '/ingressos': typeof IngressosRoute
+  '/login': typeof LoginRoute
   '/mensagens': typeof MensagensRoute
   '/perfil': typeof PerfilRoute
   '/privacidade': typeof PrivacidadeRoute
@@ -111,6 +118,7 @@ export interface FileRoutesByTo {
   '/eventos': typeof EventosRoute
   '/explorar': typeof ExplorarRoute
   '/ingressos': typeof IngressosRoute
+  '/login': typeof LoginRoute
   '/mensagens': typeof MensagensRoute
   '/perfil': typeof PerfilRoute
   '/privacidade': typeof PrivacidadeRoute
@@ -127,6 +135,7 @@ export interface FileRoutesById {
   '/eventos': typeof EventosRoute
   '/explorar': typeof ExplorarRoute
   '/ingressos': typeof IngressosRoute
+  '/login': typeof LoginRoute
   '/mensagens': typeof MensagensRoute
   '/perfil': typeof PerfilRoute
   '/privacidade': typeof PrivacidadeRoute
@@ -144,6 +153,7 @@ export interface FileRouteTypes {
     | '/eventos'
     | '/explorar'
     | '/ingressos'
+    | '/login'
     | '/mensagens'
     | '/perfil'
     | '/privacidade'
@@ -159,6 +169,7 @@ export interface FileRouteTypes {
     | '/eventos'
     | '/explorar'
     | '/ingressos'
+    | '/login'
     | '/mensagens'
     | '/perfil'
     | '/privacidade'
@@ -174,6 +185,7 @@ export interface FileRouteTypes {
     | '/eventos'
     | '/explorar'
     | '/ingressos'
+    | '/login'
     | '/mensagens'
     | '/perfil'
     | '/privacidade'
@@ -190,6 +202,7 @@ export interface RootRouteChildren {
   EventosRoute: typeof EventosRoute
   ExplorarRoute: typeof ExplorarRoute
   IngressosRoute: typeof IngressosRoute
+  LoginRoute: typeof LoginRoute
   MensagensRoute: typeof MensagensRoute
   PerfilRoute: typeof PerfilRoute
   PrivacidadeRoute: typeof PrivacidadeRoute
@@ -241,6 +254,13 @@ declare module '@tanstack/react-router' {
       path: '/ingressos'
       fullPath: '/ingressos'
       preLoaderRoute: typeof IngressosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mensagens': {
@@ -302,6 +322,7 @@ const rootRouteChildren: RootRouteChildren = {
   EventosRoute: EventosRoute,
   ExplorarRoute: ExplorarRoute,
   IngressosRoute: IngressosRoute,
+  LoginRoute: LoginRoute,
   MensagensRoute: MensagensRoute,
   PerfilRoute: PerfilRoute,
   PrivacidadeRoute: PrivacidadeRoute,
