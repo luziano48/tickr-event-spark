@@ -1,14 +1,7 @@
 # Roadmap
 
-- [ ] Trocar a lupa da navegação por uma bússola sem alterar a barra.
-- [ ] Simplificar Eventos com seleção clara, resumo e abas de gestão.
-- [ ] Verificar as ações e a apresentação de Eventos no navegador.
-
-- [ ] Organizar Explorar em eventos e fornecedores com pesquisa funcional.
-- [ ] Separar o perfil oficial e os anúncios Tickr dos eventos e melhorar a apresentação.
-- [ ] Verificar pesquisa, fornecedores e acesso ao perfil oficial.
-
-- [x] Aplicar à página Mensagens o visual da referência enviada.
-- [x] Tornar as ações de aprovar, aceitar, recusar, ligar e WhatsApp funcionais.
-- [x] Levar a paleta verde mais viva e os fundos suaves para toda a aplicação.
-- [x] Validar a página no navegador em ecrãs móvel e desktop.
+- [ ] Preservar a vitrine pública de início, eventos em destaque e detalhe de evento.
+- [ ] Alternar entre navegação autenticada e barra visitante com acesso/ingresso.
+- [ ] Unificar entrada e cadastro no ecrã de autenticação com tema claro Tickr.
+- [ ] Implementar consulta de ingresso com ID aleatório, contacto correspondente, limite de tentativas e verificação por email antes de revelar o QR.
+- [ ] Validar os fluxos públicos e autenticados disponíveis no preview.
