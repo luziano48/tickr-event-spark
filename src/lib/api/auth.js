@@ -36,13 +36,37 @@ const profileSchema = z
     linkedin: z.string().max(255).optional(),
     website: z.string().max(2048).optional(),
     whatsapp: z.string().max(40).optional(),
+    contactEmail: z.union([z.string().trim().email().max(320), z.literal("")]).optional(),
     publicProfile: z.boolean().optional(),
   })
   .strict()
   .refine((profile) => Object.keys(profile).length > 0, "Indica pelo menos um campo do perfil.");
+const profilePhotoSchema = z.object({
+  imageData: z
+    .string()
+    .max(7000000)
+    .regex(/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/),
+});
+const legacyProfileSchema = z
+  .object({
+    name: z.string().max(100).optional(),
+    username: z.string().max(40).optional(),
+    location: z.string().max(150).optional(),
+    photo: z.string().max(7000000).optional(),
+    bio: z.string().max(1000).optional(),
+    email: z.string().max(320).optional(),
+    instagram: z.string().max(255).optional(),
+    linkedin: z.string().max(255).optional(),
+    website: z.string().max(2048).optional(),
+    whatsapp: z.string().max(40).optional(),
+    notifications: z.boolean().optional(),
+    publicProfile: z.boolean().optional(),
+  })
+  .passthrough();
+const accountPreferencesSchema = z.object({ notificationsEnabled: z.boolean() });
 
 const profileColumns =
-  "id, username, full_name, avatar_url, bio, location, business_profile, instagram, linkedin, website, whatsapp, public_profile, created_at, updated_at";
+  "id, username, full_name, avatar_url, bio, location, business_profile, contact_email, instagram, linkedin, website, whatsapp, public_profile, created_at, updated_at";
 
 function getAuthRedirectUrl(flow) {
   const configuredUrl = import.meta.env.VITE_SITE_URL;
@@ -64,6 +88,7 @@ function mapProfile(profile) {
     bio: profile.bio,
     location: profile.location,
     businessProfile: profile.business_profile,
+    contactEmail: profile.contact_email,
     instagram: profile.instagram,
     linkedin: profile.linkedin,
     website: profile.website,
@@ -74,18 +99,41 @@ function mapProfile(profile) {
   };
 }
 
+async function uploadProfilePhotoForUser(client, userId, imageData) {
+  const [, contentType] = imageData.match(/^data:(image\/(?:jpeg|png|webp));base64,/);
+  const extension = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" }[contentType];
+  const imageBlob = await (await fetch(imageData)).blob();
+  if (imageBlob.size > 5 * 1024 * 1024) {
+    throw new Error("A imagem não pode exceder 5 MB.");
+  }
+
+  const imagePath = `${userId}/profile/${crypto.randomUUID()}.${extension}`;
+  const { error } = await client.storage
+    .from("tickr-event-covers")
+    .upload(imagePath, imageBlob, { contentType, upsert: false, cacheControl: "3600" });
+  if (error) throw new Error(`Não foi possível guardar a foto: ${error.message}`);
+  return client.storage.from("tickr-event-covers").getPublicUrl(imagePath).data.publicUrl;
+}
+
+async function getAccountProfile(client, userId) {
+  const [{ data: profile, error: profileError }, { data: preferences, error: preferencesError }] =
+    await Promise.all([
+      client.from("tickr_profiles").select(profileColumns).eq("id", userId).single(),
+      client
+        .from("tickr_account_preferences")
+        .select("notifications_enabled")
+        .eq("user_id", userId)
+        .single(),
+    ]);
+  if (profileError) throw new Error(profileError.message);
+  if (preferencesError) throw new Error(preferencesError.message);
+  return { ...mapProfile(profile), notifications: preferences.notifications_enabled };
+}
+
 async function mapUser(client, user) {
   if (!user) return null;
 
-  const { data: profile, error: profileError } = await client
-    .from("tickr_profiles")
-    .select(profileColumns)
-    .eq("id", user.id)
-    .maybeSingle();
-  if (profileError) throw new Error(profileError.message);
-  if (!profile) {
-    throw new Error("Perfil Supabase indisponível. Aplica a migration da Fase 1.");
-  }
+  const profile = await getAccountProfile(client, user.id);
 
   const { data: roleRows, error: rolesError } = await client
     .from("tickr_user_roles")
@@ -100,13 +148,13 @@ async function mapUser(client, user) {
     ) || "member";
   return {
     id: user.id,
-    name: profile.full_name,
+    name: profile.fullName,
     email: user.email || "",
-    avatar: profile.avatar_url,
-    businessProfile: profile.business_profile,
+    avatar: profile.avatarUrl,
+    businessProfile: profile.businessProfile,
     role,
     roles,
-    profile: mapProfile(profile),
+    profile,
   };
 }
 
@@ -186,13 +234,7 @@ const getProfile = createServerFn({ method: "GET" }).handler(async () => {
   if (error) throw new Error(error.message);
   if (!data.user) throw new Error("Inicia sessão para consultar o perfil.");
 
-  const { data: profile, error: profileError } = await client
-    .from("tickr_profiles")
-    .select(profileColumns)
-    .eq("id", data.user.id)
-    .single();
-  if (profileError) throw new Error(profileError.message);
-  return mapProfile(profile);
+  return getAccountProfile(client, data.user.id);
 });
 
 const updateProfile = createServerFn({ method: "POST" })
@@ -213,20 +255,81 @@ const updateProfile = createServerFn({ method: "POST" })
       linkedin: "linkedin",
       website: "website",
       whatsapp: "whatsapp",
+      contactEmail: "contact_email",
       publicProfile: "public_profile",
     };
     const updates = Object.fromEntries(
       Object.entries(data).map(([field, value]) => [columns[field], value]),
     );
 
-    const { data: profile, error } = await client
+    const { error } = await client
       .from("tickr_profiles")
       .update(updates)
       .eq("id", userData.user.id)
       .select(profileColumns)
       .single();
     if (error) throw new Error(error.message);
-    return mapProfile(profile);
+    return getAccountProfile(client, userData.user.id);
+  });
+
+const uploadProfilePhoto = createServerFn({ method: "POST" })
+  .validator(profilePhotoSchema)
+  .handler(async ({ data }) => {
+    const client = createSupabaseServerClient();
+    const { data: userData, error: userError } = await client.auth.getUser();
+    if (userError) throw new Error(userError.message);
+    if (!userData.user) throw new Error("Inicia sessão para actualizar a foto do perfil.");
+
+    return uploadProfilePhotoForUser(client, userData.user.id, data.imageData);
+  });
+
+const updateAccountPreferences = createServerFn({ method: "POST" })
+  .validator(accountPreferencesSchema)
+  .handler(async ({ data }) => {
+    const client = createSupabaseServerClient();
+    const { data: userData, error: userError } = await client.auth.getUser();
+    if (userError) throw new Error(userError.message);
+    if (!userData.user) throw new Error("Inicia sessão para actualizar as preferências.");
+
+    const { error } = await client
+      .from("tickr_account_preferences")
+      .update({ notifications_enabled: data.notificationsEnabled })
+      .eq("user_id", userData.user.id);
+    if (error) throw new Error(error.message);
+    return { notificationsEnabled: data.notificationsEnabled };
+  });
+
+const importLegacyProfile = createServerFn({ method: "POST" })
+  .validator(z.object({ profile: legacyProfileSchema }))
+  .handler(async ({ data }) => {
+    const client = createSupabaseServerClient();
+    const { data: userData, error: userError } = await client.auth.getUser();
+    if (userError) throw new Error(userError.message);
+    if (!userData.user) throw new Error("Inicia sessão para migrar o perfil.");
+
+    const { data: existingImport, error: importCheckError } = await client
+      .from("tickr_profile_legacy_imports")
+      .select("user_id")
+      .eq("user_id", userData.user.id)
+      .maybeSingle();
+    if (importCheckError) throw new Error(importCheckError.message);
+    if (existingImport) return getAccountProfile(client, userData.user.id);
+
+    const legacy = { ...data.profile };
+    let avatarUrl = null;
+    if (legacy.photo?.startsWith("data:image/")) {
+      avatarUrl = await uploadProfilePhotoForUser(client, userData.user.id, legacy.photo);
+      legacy.photo = avatarUrl;
+    } else if (legacy.photo && /^https?:\/\//i.test(legacy.photo)) {
+      avatarUrl = legacy.photo;
+    }
+
+    const { error } = await client.rpc("tickr_import_legacy_profile", {
+      p_profile: legacy,
+      p_avatar_url: avatarUrl,
+    });
+    if (error) throw new Error(error.message);
+    return getAccountProfile(client, userData.user.id);
   });
 
 const setRole = createServerFn({ method: "POST" })
@@ -251,5 +354,8 @@ export const authApi = {
   exchangeCode: (code) => exchangeCode({ data: { code } }),
   getProfile: () => getProfile(),
   updateProfile: (profile) => updateProfile({ data: profile }),
+  uploadProfilePhoto: (imageData) => uploadProfilePhoto({ data: { imageData } }),
+  updateAccountPreferences: (preferences) => updateAccountPreferences({ data: preferences }),
+  importLegacyProfile: (profile) => importLegacyProfile({ data: { profile } }),
   setRole: (userId, role, enabled) => setRole({ data: { userId, role, enabled } }),
 };

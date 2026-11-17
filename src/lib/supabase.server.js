@@ -2,8 +2,15 @@ import { createServerClient } from "@supabase/ssr";
 import { deleteCookie, getCookies, getRequestUrl, setCookie } from "@tanstack/react-start/server";
 
 export function createSupabaseServerClient() {
-  const url = import.meta.env.VITE_SUPABASE_URL;
-  const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+  const configuredUrl = import.meta.env.VITE_SUPABASE_URL;
+  const url = isValidSupabaseUrl(configuredUrl)
+    ? configuredUrl
+    : projectId
+      ? `https://${projectId}.supabase.co`
+      : configuredUrl;
+  const key =
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
 
   if (!url || !key) {
     throw new Error(
@@ -28,4 +35,14 @@ export function createSupabaseServerClient() {
       },
     },
   });
+}
+
+function isValidSupabaseUrl(value) {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.hostname.endsWith(".supabase.co");
+  } catch {
+    return false;
+  }
 }

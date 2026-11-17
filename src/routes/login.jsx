@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -10,10 +10,11 @@ import {
   Mail,
   UserRound,
 } from "lucide-react";
-import { Logo } from "@/components/tickr/Logo";
 import { Button } from "@/components/ui/button";
-import festivalImage from "@/assets/festival.jpg";
+import festivalImage from "@/assets/Festival TICKR sob Céu Neon.png";
 import { authApi } from "@/lib/api/auth";
+import { useAuthSession } from "@/components/tickr/AuthContext";
+import { VisitorBackButton } from "@/components/tickr/VisitorBackButton";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -21,12 +22,14 @@ export const Route = createFileRoute("/login")({
       { title: "Entrar ou criar conta | Tickr" },
       {
         name: "description",
-        content: "Acede à Tickr para descobrir eventos ou gerir o teu negócio de eventos em Angola.",
+        content:
+          "Acede à Tickr para descobrir eventos ou gerir o teu negócio de eventos em Angola.",
       },
       { property: "og:title", content: "Entrar ou criar conta | Tickr" },
       {
         property: "og:description",
-        content: "Acede à Tickr para descobrir eventos ou gerir o teu negócio de eventos em Angola.",
+        content:
+          "Acede à Tickr para descobrir eventos ou gerir o teu negócio de eventos em Angola.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -57,18 +60,23 @@ function Auth() {
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [selectedRole, setSelectedRole] = useState("organizer");
+  const { setUser } = useAuthSession();
   const navigate = useNavigate();
 
   useEffect(() => {
     const search = new URLSearchParams(window.location.search);
+    if (search.get("required") === "1") {
+      setNote("Inicia sessão para aceder a esta área.");
+    }
     const code = search.get("code");
     if (!code) return;
 
     let active = true;
     authApi
       .exchangeCode(code)
-      .then(() => {
+      .then(({ user }) => {
         if (!active) return;
+        if (user) setUser(user);
         window.history.replaceState({}, "", window.location.pathname);
         if (search.get("flow") === "recovery") {
           setMode("update");
@@ -84,7 +92,7 @@ function Auth() {
     return () => {
       active = false;
     };
-  }, [navigate]);
+  }, [navigate, setUser]);
 
   function changeMode(nextMode) {
     setMode(nextMode);
@@ -116,7 +124,8 @@ function Auth() {
     setBusy(true);
     try {
       if (mode === "login") {
-        await authApi.signIn({ email, password });
+        const { user } = await authApi.signIn({ email, password });
+        setUser(user);
       } else if (mode === "register") {
         const name = String(form.get("name") || "").trim();
         if (!name) throw Error("Introduz o teu nome.");
@@ -131,6 +140,8 @@ function Auth() {
           setNote("Confirma o teu email para concluir a criação da conta.");
           return;
         }
+        const { user } = await authApi.session();
+        if (user) setUser(user);
       } else if (mode === "recover") {
         const result = await authApi.recoverPassword(email);
         setNote(result?.message || "Se a conta existir, receberás instruções de recuperação.");
@@ -157,7 +168,7 @@ function Auth() {
           : "Entra na tua conta";
 
   return (
-    <main className="auth-shell min-h-screen px-4 py-4 sm:px-8 sm:py-8">
+    <main className="auth-shell tickr-page-content min-h-screen px-4 py-4 sm:px-8 sm:py-8">
       <div className="mx-auto grid min-h-[calc(100svh-2rem)] max-w-6xl overflow-hidden rounded-md border border-auth-border bg-auth-panel shadow-2xl sm:min-h-[min(820px,calc(100svh-4rem))] sm:grid-cols-2">
         <section className="relative flex min-h-52 flex-col justify-between overflow-hidden p-5 sm:min-h-[680px] sm:p-8">
           <img
@@ -165,24 +176,16 @@ function Auth() {
             alt="Concerto ao vivo com público e luzes de palco"
             className="absolute inset-0 size-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-auth-bg via-auth-bg/55 to-auth-bg/20" />
-          <Link
-            to="/"
-            aria-label="Tickr, página inicial"
-            className="relative z-10 inline-flex w-fit rounded-sm bg-card px-2 py-1 shadow-md"
-          >
-            <Logo className="h-9 w-auto sm:h-11" />
-          </Link>
-          <div className="relative z-10 mt-10 max-w-md pb-1 sm:mt-auto sm:pb-4">
-            <p className="mb-3 text-xs font-bold uppercase text-auth-accent">
-              Eventos e serviços em Angola
-            </p>
-            <h1 className="font-display text-3xl font-bold leading-tight text-auth-foreground sm:text-4xl">
-              A tua próxima grande experiência começa aqui.
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/55 to-black/20" />
+          <VisitorBackButton
+            fallbackTo="/"
+            className="relative z-10 grid size-10 place-items-center rounded-full bg-card/90 text-foreground shadow-md"
+          />
+          <div className="relative z-10 mt-8 max-w-md pb-1 sm:mt-auto sm:pb-4">
+            <p className="mb-2 text-xs font-bold uppercase text-white/85">Eventos em Angola</p>
+            <h1 className="font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
+              Grandes momentos, na Tickr.
             </h1>
-            <p className="mt-3 max-w-sm text-sm leading-6 text-auth-muted">
-              Descobre eventos, encontra parceiros e faz parte da comunidade Tickr.
-            </p>
           </div>
         </section>
 
@@ -203,19 +206,22 @@ function Auth() {
             </div>
 
             {mode !== "update" && (
-              <div className="mb-6 grid grid-cols-3 border-b border-auth-border" role="tablist" aria-label="Acesso à conta">
+              <div
+                className="mb-6 grid grid-cols-2 border-b border-auth-border"
+                role="tablist"
+                aria-label="Acesso à conta"
+              >
                 {[
                   ["login", "Entrar"],
                   ["register", "Criar conta"],
-                  ["recover", "Recuperar"],
                 ].map(([value, label]) => (
                   <Button
                     key={value}
                     type="button"
                     role="tab"
-                    aria-selected={mode === value}
+                    aria-selected={mode === value || (mode === "recover" && value === "login")}
                     onClick={() => changeMode(value)}
-                    className={`min-h-11 rounded-none border-b-2 px-2 text-sm ${mode === value ? "border-auth-accent text-auth-accent" : "border-transparent text-auth-muted hover:text-auth-foreground"}`}
+                    className={`min-h-11 rounded-none border-b-2 px-2 text-sm ${mode === value || (mode === "recover" && value === "login") ? "border-auth-accent text-auth-accent" : "border-transparent text-auth-muted hover:text-auth-foreground"}`}
                   >
                     {label}
                   </Button>
@@ -294,7 +300,9 @@ function Auth() {
                       />
                       <Button
                         type="button"
-                        aria-label={showPassword ? "Ocultar palavra-passe" : "Mostrar palavra-passe"}
+                        aria-label={
+                          showPassword ? "Ocultar palavra-passe" : "Mostrar palavra-passe"
+                        }
                         onClick={() => setShowPassword((visible) => !visible)}
                         className="absolute right-1 top-1/2 size-9 -translate-y-1/2 rounded-sm text-auth-muted hover:text-auth-foreground"
                       >
@@ -321,6 +329,28 @@ function Auth() {
                       </span>
                     </label>
                   )}
+
+                  {mode === "login" ? (
+                    <div className="-mt-1 text-right">
+                      <button
+                        type="button"
+                        onClick={() => changeMode("recover")}
+                        className="text-xs font-semibold text-primary hover:underline"
+                      >
+                        Esqueci a senha
+                      </button>
+                    </div>
+                  ) : null}
+
+                  {mode === "recover" ? (
+                    <button
+                      type="button"
+                      onClick={() => changeMode("login")}
+                      className="text-xs font-semibold text-primary hover:underline"
+                    >
+                      Voltar para Entrar
+                    </button>
+                  ) : null}
                 </>
               )}
 
@@ -329,12 +359,34 @@ function Auth() {
                 disabled={busy}
                 className="grad-primary glow mt-2 min-h-12 w-full rounded-sm text-sm font-bold text-primary-foreground disabled:cursor-not-allowed"
               >
-                {busy ? "A processar…" : mode === "login" ? "Entrar" : mode === "register" ? "Criar conta" : mode === "update" ? "Actualizar palavra-passe" : "Enviar instruções"}
+                {busy
+                  ? "A processar…"
+                  : mode === "login"
+                    ? "Entrar"
+                    : mode === "register"
+                      ? "Criar conta"
+                      : mode === "update"
+                        ? "Actualizar palavra-passe"
+                        : "Enviar instruções"}
                 {!busy && <ArrowRight className="size-4" />}
               </Button>
 
-              {error && <p role="alert" className="rounded-sm border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
-              {note && <p role="status" className="rounded-sm border border-auth-accent/30 bg-auth-accent/10 px-3 py-2 text-sm text-auth-accent">{note}</p>}
+              {error && (
+                <p
+                  role="alert"
+                  className="rounded-sm border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                >
+                  {error}
+                </p>
+              )}
+              {note && (
+                <p
+                  role="status"
+                  className="rounded-sm border border-auth-accent/30 bg-auth-accent/10 px-3 py-2 text-sm text-auth-accent"
+                >
+                  {note}
+                </p>
+              )}
             </form>
 
             <p className="mt-5 text-center text-xs text-auth-muted">

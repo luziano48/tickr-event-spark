@@ -14,14 +14,17 @@ import {
   UserRound,
 } from "lucide-react";
 import { authApi } from "@/lib/api/auth";
+import { useAuthSession } from "./AuthContext";
 
 const supportUrl = "https://wa.me/244923000000";
 
 function Contents({ close, profile, toggleSetting }) {
   const navigate = useNavigate();
+  const { setUser } = useAuthSession();
   const logout = async () => {
     try {
       await authApi.signOut();
+      setUser(null);
       close();
       navigate({ to: "/login" });
     } catch (error) {

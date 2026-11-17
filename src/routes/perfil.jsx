@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { requireAuthenticated } from "@/lib/require-auth";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -38,6 +39,7 @@ import { useReviews } from "@/hooks/use-community";
 const PROFILE_TARGET = "perfil:tickr-eventos";
 
 export const Route = createFileRoute("/perfil")({
+  beforeLoad: requireAuthenticated,
   head: () => ({
     meta: [
       { title: "Perfil do organizador | Tickr" },
@@ -142,6 +144,9 @@ function Perfil() {
     saveProfile,
     cancelEditing,
     toggleSetting,
+    loading: profileLoading,
+    saving: profileSaving,
+    error: profileError,
   } = useOrganizerProfile();
   const { starCount } = useEventStars();
   const totalEventStars = publishedEvents.reduce((sum, { event }) => sum + starCount(event.id), 0);
@@ -194,6 +199,20 @@ function Perfil() {
         </div>
       </header>
 
+      {profileError && !editing && (
+        <p
+          role="alert"
+          className="mx-5 mb-3 rounded-xl bg-destructive/10 p-3 text-xs text-destructive"
+        >
+          {profileError}
+        </p>
+      )}
+      {profileLoading && (
+        <p role="status" className="px-5 pb-3 text-xs text-muted-foreground">
+          A carregar os dados do perfil…
+        </p>
+      )}
+
       <button
         type="button"
         onClick={startEditing}
@@ -227,11 +246,15 @@ function Perfil() {
           aria-label="Informações do perfil"
           className="border-b border-border px-5 pb-5 pt-5"
         >
-          <p className="text-xs font-semibold text-primary">{profile.username} · Angola</p>
-          <p className="mt-3 flex items-center gap-1 text-[11px] text-muted-foreground">
-            <MapPin className="size-3" />
-            {profile.location}
-          </p>
+          {profile.username && (
+            <p className="text-xs font-semibold text-primary">{profile.username} · Angola</p>
+          )}
+          {profile.location && (
+            <p className="mt-3 flex items-center gap-1 text-[11px] text-muted-foreground">
+              <MapPin className="size-3" />
+              {profile.location}
+            </p>
+          )}
           <p className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground">
             <Star className={`size-3.5 ${totalEventStars ? "fill-primary text-primary" : ""}`} />
             {totalEventStars} {totalEventStars === 1 ? "estrela" : "estrelas"} nos eventos
@@ -435,10 +458,16 @@ function Perfil() {
                     </>
                   )}
                 </div>
-                <footer className="sticky bottom-0 flex gap-3 border-t border-border bg-background/95 px-5 py-4 backdrop-blur">
+                <footer className="sticky bottom-0 flex flex-wrap gap-3 border-t border-border bg-background/95 px-5 py-4 backdrop-blur">
+                  {profileError && (
+                    <p role="alert" className="w-full text-xs text-destructive">
+                      {profileError}
+                    </p>
+                  )}
                   <button
                     type="button"
                     onClick={cancelEditing}
+                    disabled={profileSaving}
                     className="flex-1 rounded-full border border-border py-3 text-sm font-semibold"
                   >
                     Cancelar
@@ -446,9 +475,10 @@ function Perfil() {
                   <button
                     type="button"
                     onClick={saveProfile}
-                    className="grad-primary glow flex-1 rounded-full py-3 text-sm font-bold text-primary-foreground"
+                    disabled={profileSaving || profileLoading}
+                    className="grad-primary glow flex-1 rounded-full py-3 text-sm font-bold text-primary-foreground disabled:opacity-60"
                   >
-                    Guardar perfil
+                    {profileSaving ? "A guardar…" : "Guardar perfil"}
                   </button>
                 </footer>
               </section>
