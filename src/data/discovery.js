@@ -1,5 +1,9 @@
 export function normalizeSearch(value = "") {
-  return String(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  return String(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
 }
 
 export function matchesSearch(query, ...values) {
@@ -7,7 +11,11 @@ export function matchesSearch(query, ...values) {
 }
 
 export function discoverEvents(events, query = "", category = "Todos") {
-  return events.filter((event) => event.id !== "festival-luanda" && event.kind !== "official" &&
-    (category === "Todos" || normalizeSearch(event.category) === normalizeSearch(category)) &&
-    matchesSearch(query, event.title, event.category, event.city, event.venue));
+  return events.filter(
+    (event) =>
+      event.id !== "festival-luanda" &&
+      event.kind !== "official" &&
+      (category === "Todos" || normalizeSearch(event.category) === normalizeSearch(category)) &&
+      matchesSearch(query, event.title, event.category, event.city, event.venue),
+  );
 }

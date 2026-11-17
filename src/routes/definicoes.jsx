@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { requireAuthenticated } from "@/lib/require-auth";
 import { ArrowLeft } from "lucide-react";
 import { Screen } from "@/components/tickr/Screen";
 import { preferencesApi } from "@/lib/api/preferences";
-export const Route = createFileRoute("/definicoes")({ component: Settings });
+export const Route = createFileRoute("/definicoes")({
+  beforeLoad: requireAuthenticated,
+  component: Settings,
+});
 function Settings() {
   const [theme, setTheme] = useState(
     () => typeof localStorage !== "undefined" && localStorage.getItem("tickr-theme") === "dark",

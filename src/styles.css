@@ -98,13 +98,13 @@
   --warning: oklch(0.63 0.16 75);
   --warning-soft: oklch(0.95 0.055 80);
   --danger-soft: oklch(0.95 0.045 25);
-  --auth-bg: oklch(0.15 0.018 248);
-  --auth-panel: oklch(0.19 0.022 248);
-  --auth-input: oklch(0.16 0.018 248);
-  --auth-foreground: oklch(0.97 0.008 180);
-  --auth-muted: oklch(0.72 0.02 220);
-  --auth-border: oklch(1 0 0 / 12%);
-  --auth-accent: oklch(0.78 0.16 160);
+  --auth-bg: var(--background);
+  --auth-panel: var(--card);
+  --auth-input: var(--background);
+  --auth-foreground: var(--foreground);
+  --auth-muted: var(--muted-foreground);
+  --auth-border: var(--border);
+  --auth-accent: var(--primary);
   --gradient-primary: linear-gradient(135deg, var(--mint), var(--primary));
   --shadow-glow: 0 12px 40px -12px color-mix(in oklab, var(--primary) 25%, transparent);
 }

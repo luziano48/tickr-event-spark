@@ -1,12 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { Screen } from "@/components/tickr/Screen";
+import { VisitorBackButton } from "@/components/tickr/VisitorBackButton";
 export const Route = createFileRoute("/privacidade")({
   component: () => (
     <Screen nav={false}>
       <main className="space-y-5 px-5 py-8">
-        <Link to="/" className="text-sm font-semibold text-primary">
-          ← Voltar
-        </Link>
+        <VisitorBackButton fallbackTo="/" />
         <p className="rounded-xl bg-warning-soft p-3 text-xs font-extrabold text-warning">
           PLACEHOLDER — REQUER REVISÃO LEGAL ANTES DA PUBLICAÇÃO
         </p>

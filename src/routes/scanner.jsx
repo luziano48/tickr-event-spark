@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { requireAuthenticated } from "@/lib/require-auth";
 import { CheckCircle2, RotateCw, Settings, X } from "lucide-react";
 import { Screen } from "@/components/tickr/Screen";
 import { QrCode } from "@/components/tickr/QrCode";
 import festival from "@/assets/festival.jpg";
 import { useScanner } from "@/hooks/use-scanner";
 export const Route = createFileRoute("/scanner")({
+  beforeLoad: requireAuthenticated,
   head: () => ({
     meta: [
       { title: "Validar entradas | Tickr" },

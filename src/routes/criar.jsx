@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { requireAuthenticated } from "@/lib/require-auth";
 import {
   ArrowLeft,
   ArrowRight,
@@ -17,6 +18,7 @@ import { suppliers } from "@/data/create-event";
 import { useCreateEvent, eventFormCategories, ageOptions } from "@/hooks/use-create-event";
 
 export const Route = createFileRoute("/criar")({
+  beforeLoad: requireAuthenticated,
   head: () => ({
     meta: [
       { title: "Criar experiência — Tickr" },

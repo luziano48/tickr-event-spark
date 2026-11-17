@@ -50,8 +50,5 @@ export const organizerDashboardEvents = [
 }));
 
 export function getEventDashboard(id) {
-  return (
-    organizerDashboardEvents.find((event) => event.id === id) ||
-    organizerDashboardEvents[0]
-  );
+  return organizerDashboardEvents.find((event) => event.id === id) || organizerDashboardEvents[0];
 }

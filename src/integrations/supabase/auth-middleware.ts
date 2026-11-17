@@ -34,7 +34,13 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server(
   async ({ next }) => {
     
-    const SUPABASE_URL = process.env['SUPABASE_URL'];
+    const projectId = process.env['SUPABASE_PROJECT_ID'];
+    const configuredUrl = process.env['SUPABASE_URL'];
+    const SUPABASE_URL = isValidSupabaseUrl(configuredUrl)
+      ? configuredUrl
+      : projectId
+        ? `https://${projectId}.supabase.co`
+        : configuredUrl;
     const SUPABASE_PUBLISHABLE_KEY = process.env['SUPABASE_PUBLISHABLE_KEY'];
 
     if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
@@ -109,3 +115,13 @@ export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server
     });
   },
 );
+
+function isValidSupabaseUrl(value: string | undefined): value is string {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && url.hostname.endsWith('.supabase.co');
+  } catch {
+    return false;
+  }
+}

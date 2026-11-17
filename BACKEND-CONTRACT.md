@@ -26,6 +26,7 @@ O schema da Fase 1 está definido em `supabase/migrations/20261108160000_phase1_
 | Criação de eventos          | Ligado após migrations | RPC atómico guarda evento + tipos de ingresso com `owner_id` da sessão; estado inicial em revisão    |
 | Eventos de demonstração     | Seed preparada         | Quatro eventos associados à conta oficial Tickr Eventos; sem inventar dados de lotação/tickets       |
 | Pedido de ingresso visitante | Ligado após migration  | Sem conta nem pagamento; pedido fica visível apenas ao dono/gestor autenticado do evento              |
+| Recuperar ingresso visitante | Migration + email      | ID aleatório de 10 caracteres, contacto correspondente e código por email antes de revelar o QR       |
 | Preferências da conta       | Pendente               | Endpoint `/api/account/preferences` ainda não implementado                                           |
 
 As funções de autenticação são funções de servidor TanStack Start, não endpoints REST públicos. Os restantes endpoints que ainda não existem respondem como serviço indisponível; não há autenticação simulada nem envio de recuperação fingido.
@@ -34,6 +35,8 @@ As funções de autenticação são funções de servidor TanStack Start, não e
 
 - Aplicar a migration da Fase 1 no projecto Supabase e promover o primeiro administrador.
 - Aplicar `supabase/migrations/20261108220000_guest_ticket_requests.sql` antes de activar pedidos de ingresso sem conta.
+- Aplicar `supabase/migrations/20261117220000_guest_ticket_access.sql` e configurar `RESEND_API_KEY`, `TICKR_TICKET_EMAIL_FROM` e `TICKR_TICKET_ACCESS_SECRET` (mínimo 32 caracteres) no servidor para activar a recuperação de ingressos. O limite é de 5 pedidos por IP e 10 verificações por IP em 15 minutos; cada código expira em 5 minutos.
+- A recuperação só devolve bilhetes de encomendas pagas existentes. O protótipo ainda não cria encomendas pagas nem emite bilhetes; não mostrar códigos ou QR de demonstração como ingressos reais.
 - Configurar URLs de redireccionamento de email no projecto Supabase para desenvolvimento e produção.
 - Implementar contratos acima, recuperação real, auditoria e rate limiting.
 - Implementar endpoints e transacções para pedidos, pagamentos, emissão de bilhetes/QR e prevenção de duplicados.

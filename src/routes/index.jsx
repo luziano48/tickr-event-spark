@@ -15,6 +15,8 @@ import { featuredEvent, secondaryEvents } from "@/data/home";
 import { tickrAnnouncements } from "@/data/tickr-profile";
 import { AccountMenu } from "@/components/tickr/AccountMenu";
 import { useOrganizerProfile } from "@/hooks/use-organizer-profile";
+import { useAuthSession } from "@/components/tickr/AuthContext";
+import { VisitorBackButton } from "@/components/tickr/VisitorBackButton";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -35,15 +37,21 @@ export const Route = createFileRoute("/")({
 });
 function Home() {
   const { profile, toggleSetting } = useOrganizerProfile();
+  const { status } = useAuthSession();
   return (
     <Screen>
-      <header className="flex items-center justify-between px-4 pt-5 pb-3">
-        <Logo />
+      <header className="flex items-center justify-between gap-3 px-4 pt-5 pb-3">
+        <div className="flex min-w-0 items-center gap-2">
+          {status !== "authenticated" ? <VisitorBackButton fallbackTo="/explorar" /> : null}
+          <Logo />
+        </div>
         <div className="flex items-center gap-3">
           <Link to="/explorar" aria-label="Procurar">
             <Search className="size-5" />
           </Link>
-          <AccountMenu profile={profile} toggleSetting={toggleSetting} />
+          {status === "authenticated" ? (
+            <AccountMenu profile={profile} toggleSetting={toggleSetting} />
+          ) : null}
         </div>
       </header>
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { requireAuthenticated } from "@/lib/require-auth";
 import {
   ArrowLeft,
   ArrowRight,
@@ -18,6 +19,7 @@ import { sponsorRequests } from "@/data/messages";
 import { ticketRequestsApi } from "@/lib/api/ticket-requests";
 
 export const Route = createFileRoute("/mensagens")({
+  beforeLoad: requireAuthenticated,
   head: () => ({
     meta: [
       { title: "Notificações e pedidos | Tickr" },

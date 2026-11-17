@@ -30,7 +30,13 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 }
 
 function createSupabaseAdminClient() {
-  const SUPABASE_URL = process.env['SUPABASE_URL'];
+  const projectId = process.env['SUPABASE_PROJECT_ID'];
+  const configuredUrl = process.env['SUPABASE_URL'];
+  const SUPABASE_URL = isValidSupabaseUrl(configuredUrl)
+    ? configuredUrl
+    : projectId
+      ? `https://${projectId}.supabase.co`
+      : configuredUrl;
   const SUPABASE_SERVICE_ROLE_KEY = process.env['SUPABASE_SERVICE_ROLE_KEY'];
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
@@ -53,6 +59,16 @@ function createSupabaseAdminClient() {
       autoRefreshToken: false,
     }
   });
+}
+
+function isValidSupabaseUrl(value: string | undefined): value is string {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && url.hostname.endsWith('.supabase.co');
+  } catch {
+    return false;
+  }
 }
 
 let _supabaseAdmin: ReturnType<typeof createSupabaseAdminClient> | undefined;

@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Bell, Compass, Home, Plus, QrCode } from "lucide-react";
+import { Bell, Compass, Home, Plus, QrCode, Ticket, UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useAuthSession } from "./AuthContext";
 const items = [
   { to: "/", label: "Início", icon: Home },
   { to: "/explorar", label: "Explorar", icon: Compass },
@@ -10,6 +11,7 @@ const items = [
 ];
 export function BottomNav() {
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const { status } = useAuthSession();
   const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
@@ -47,11 +49,45 @@ export function BottomNav() {
     };
   }, [path]);
 
+  if (status !== "authenticated") {
+    return (
+      <div
+        aria-hidden={hidden}
+        inert={hidden}
+        className={`fixed inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 mx-auto w-[calc(100%-2rem)] max-w-xs transition-[transform,opacity] duration-300 ease-out motion-reduce:transition-none ${hidden ? "pointer-events-none translate-y-[calc(100%+3rem)] opacity-0" : "translate-y-0 opacity-100"}`}
+      >
+        <nav
+          aria-label="Acesso à Tickr"
+          onFocusCapture={() => setHidden(false)}
+          className="grid grid-cols-2 gap-1 rounded-full border border-border bg-card/95 p-1.5 shadow-xl backdrop-blur-xl"
+        >
+          <Link
+            to="/login"
+            className="flex min-h-10 items-center justify-center gap-1.5 rounded-full bg-primary px-3 text-center text-xs font-bold text-primary-foreground shadow-sm"
+          >
+            <UserRound className="size-4 shrink-0" />
+            Entrar
+          </Link>
+          <Link
+            to="/ingressos"
+            aria-current={path === "/ingressos" ? "page" : undefined}
+            className={`flex min-h-10 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-bold ${path === "/ingressos" ? "bg-success-soft text-primary" : "bg-surface text-foreground"}`}
+          >
+            <Ticket className="size-4 shrink-0" />
+            Ingressos
+          </Link>
+        </nav>
+      </div>
+    );
+  }
+
   return (
     <nav
       aria-label="Navegação principal"
       onFocusCapture={() => setHidden(false)}
-      className={`fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-40 grid w-1/2 -translate-x-1/2 grid-cols-[minmax(0,1fr)_40px] items-center gap-1 sm:grid-cols-[minmax(0,1fr)_48px] sm:gap-2 transition-[transform,opacity] duration-300 ease-out motion-reduce:transition-none ${hidden ? "translate-y-[calc(100%+3rem)] opacity-0" : "translate-y-0 opacity-100"}`}
+      aria-hidden={hidden}
+      inert={hidden}
+      className={`fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-40 grid w-1/2 -translate-x-1/2 grid-cols-[minmax(0,1fr)_40px] items-center gap-1 sm:grid-cols-[minmax(0,1fr)_48px] sm:gap-2 transition-[transform,opacity] duration-300 ease-out motion-reduce:transition-none ${hidden ? "pointer-events-none translate-y-[calc(100%+3rem)] opacity-0" : "translate-y-0 opacity-100"}`}
     >
       <ul className="grid min-w-0 grid-cols-4 items-center rounded-full border border-border bg-card/95 p-1 sm:p-1.5 glow backdrop-blur-xl">
         {items

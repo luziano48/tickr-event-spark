@@ -20,6 +20,7 @@ import { Screen } from "@/components/tickr/Screen";
 import { getEvent } from "@/data/events";
 import { loadCreatedEvents } from "@/data/created-events";
 import { EventStarButton } from "@/components/tickr/EventStarButton";
+import { VisitorBackButton } from "@/components/tickr/VisitorBackButton";
 import { ticketRequestsApi } from "@/lib/api/ticket-requests";
 import { useEffect, useState } from "react";
 
@@ -65,6 +66,10 @@ function EventoPage() {
   return (
     <Screen nav={false}>
       <main className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
+        <VisitorBackButton
+          fallbackTo="/explorar"
+          className="mb-5 grid size-10 place-items-center rounded-full bg-surface text-foreground"
+        />
         <h1 className="text-xl font-extrabold">Evento não encontrado</h1>
         <p className="mt-2 text-sm text-muted-foreground">Este evento já não está disponível.</p>
         <Link to="/explorar" className="mt-4 text-sm font-bold text-primary">
@@ -89,16 +94,13 @@ function EventDetail({ event }) {
     { icon: ShieldCheck, label: "Idade", value: event.age || "Livre" },
   ];
   return (
-    <Screen nav={false}>
+    <Screen>
       <div className="relative">
         <img src={event.image} alt={event.title} className="h-72 w-full object-cover" />
-        <Link
-          to="/explorar"
-          aria-label="Voltar"
+        <VisitorBackButton
+          fallbackTo="/explorar"
           className="absolute top-5 left-4 grid size-9 place-items-center rounded-full bg-card/90"
-        >
-          <ArrowLeft className="size-4" />
-        </Link>
+        />
         <span className="absolute top-6 right-4 rounded-full bg-card/90 px-3 py-1 text-[10px] font-bold tracking-wider text-primary">
           {event.category}
         </span>
@@ -179,7 +181,7 @@ function EventDetail({ event }) {
           </section>
         ) : null}
       </main>
-      <div className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-md border-t border-border bg-card/95 p-4 backdrop-blur">
+      <div className="fixed inset-x-0 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-30 mx-auto max-w-md border-t border-border bg-card/95 p-4 backdrop-blur">
         {event.status && event.status !== "published" ? (
           <p className="text-center text-sm font-semibold text-muted-foreground">
             Este evento ainda está em revisão.
