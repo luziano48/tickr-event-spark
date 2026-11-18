@@ -11,7 +11,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import festivalImage from "@/assets/Festival TICKR sob Céu Neon.png";
+import festivalImage from "@/assets/Festival TICKR sob Céu Neon.png";
 import { authApi } from "@/lib/api/auth";
 import { useAuthSession } from "@/components/tickr/AuthContext";
 import { VisitorBackButton } from "@/components/tickr/VisitorBackButton";
